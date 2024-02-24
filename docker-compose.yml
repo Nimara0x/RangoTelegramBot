@@ -3,4 +3,4 @@ version: '3'
 services:
   rango-bot:
     image: rango-bot
-    command: bash -c "python src/rng_main.py"
+    command: bash -c "python rng_main.py"
