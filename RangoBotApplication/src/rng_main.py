@@ -263,7 +263,6 @@ def webhook_main():
     # Mount dispatcher startup and shutdown hooks to aiohttp application
     setup_application(app, dp, bot=bot)
 
-    WEB_SERVER_HOST = "https://rango-bot.thevahidkaya.workers.dev"
     # Port for incoming request from reverse proxy. Should be any available port
     # WEB_SERVER_PORT = 8080
     # And finally start webserver
@@ -272,5 +271,5 @@ def webhook_main():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    asyncio.run(main())
-    # webhook_main()
+    # asyncio.run(main())
+    webhook_main()
