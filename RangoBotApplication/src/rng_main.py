@@ -11,7 +11,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from rango_client import RangoClient
 from aiohttp import web
-from src.utils import amount_to_human_readable
+from utils import amount_to_human_readable
 
 logger = logging.getLogger(__file__)
 
