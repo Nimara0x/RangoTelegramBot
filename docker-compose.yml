@@ -2,5 +2,5 @@ version: '3'
 
 services:
   rango-bot:
-    image: rango-bot
+    build: .
     command: bash -c "python rng_main.py"
