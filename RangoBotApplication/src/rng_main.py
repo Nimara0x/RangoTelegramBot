@@ -35,8 +35,6 @@ async def command_start_handler(message: Message):
     user_id = message.chat.id
     try:
         request_id, tx_id = message.text.split(' ')[1].split("|")
-        step = request_latest_step[request_id]
-        asyncio.create_task(check_tx_sign_status_looper(message, request_id, tx_id, step))
     except IndexError:
         print('No input param has been identified, proceed with welcome message...')
         msg = "Hey there! \n" \
@@ -146,7 +144,7 @@ async def confirm_swap(message: Message, request_id: str):
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
     request_latest_step[request_id] = request_latest_step.get(request_id, 0) + 1
-    is_success, sign_tx_or_error = await rango_client.create_transaction(request_id)
+    is_success, sign_tx_or_error = await rango_client.create_transaction(request_id, user_id)
     approved_before = await only_check_approval_status_looper(max_retry=2, request_id=request_id)
     if is_success and not approved_before:
         msg = f"Please approve the tx by clicking on the button 👇 \n" \
@@ -174,7 +172,7 @@ async def sign_tx(message: Message, request_id: str):
     print(message)
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
-    is_success, sign_tx_url = await rango_client.create_transaction(request_id)
+    is_success, sign_tx_url = await rango_client.create_transaction(request_id, user_id)
     if is_success:
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
@@ -243,8 +241,7 @@ async def check_approval_status_looper(message: Message, request_id: str):
     return True
 
 
-async def check_tx_sign_status_looper(message: Message, request_id: str, tx_id: str, step: int):
-    user_id = message.chat.id
+async def check_tx_sign_status_looper(bot: Bot, user_id: str, request_id: str, tx_id: str, step: int):
     msg_id = message_id_map[user_id]
     print("Check tx sign status looper is called, req: request_id")
     is_tx_signed, tx = False, None
@@ -264,12 +261,12 @@ async def check_tx_sign_status_looper(message: Message, request_id: str, tx_id: 
               '🔹 route: %s \n' \
               '🔹 Output amount: %s \n' \
               '%s' % (route, tx.get_output_amount(), tx.print_explorer_urls())
-        return await message.edit_text(text=msg, inline_message_id=msg_id, )
+        return await bot.edit_message_text(text=msg, inline_message_id=msg_id)
     if tx:
         msg = tx.extraMessage
     else:
         msg = 'An error has been occurred, please contact admin!'
-    return await message.edit_text(text=msg, inline_message_id=msg_id)
+    return await bot.edit_message_text(text=msg, inline_message_id=msg_id)
 
 
 async def main() -> None:
@@ -280,11 +277,16 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 
-async def check_status_handler(request):
+async def check_status_handler(request, bot: Bot):
     print("in check_status_handler...")
     tx_hash = request.query.get('tx_hash', None)
-    tx_hash = request.query.get('request_id', None)
+    request_id = request.query.get('request_id', None)
+    tg_user_id = request.query.get('tg_user_id', None)
     print(tx_hash)
+    print(request_id)
+    print(tg_user_id)
+    step = request_latest_step[request_id]
+    asyncio.create_task(check_tx_sign_status_looper(bot, tg_user_id, request_id, tx_hash, step))
     return web.Response(text="Received!")
 
 

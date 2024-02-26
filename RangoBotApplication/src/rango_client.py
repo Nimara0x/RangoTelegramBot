@@ -111,7 +111,7 @@ class RangoClient(Singleton):
         print(swap_path)
         return request_id, swap_path
 
-    async def create_transaction(self, request_id: str, step: int = 1, slippage: int = 2):
+    async def create_transaction(self, tg_user_id: str, request_id: str, step: int = 1, slippage: int = 2):
         url = f"tx/create"
         payload = {
             "userSettings": {
@@ -130,6 +130,7 @@ class RangoClient(Singleton):
         if response['ok']:
             resp_tx = response['transaction']
             resp_tx['reqId'] = request_id
+            resp_tx['tgUserId'] = tg_user_id
             tx: json = json.dumps(resp_tx)
             encoded_string = base64.b64encode(tx.encode()).decode()
             # wallet_url = f'https://metamask.app.link/dapp/test-dapp-pearl.vercel.app/?param={encoded_string}'
