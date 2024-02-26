@@ -14,6 +14,8 @@ from aiogram.types import Message, CallbackQuery, Update
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from rango_client import RangoClient
 from aiohttp import web
+
+from src.middleware import SampleMiddleware
 from utils import amount_to_human_readable
 
 logger = logging.getLogger(__file__)
@@ -281,10 +283,6 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 
-async def on_startup(bot: Bot) -> None:
-    await bot.set_webhook(f'https://rangobot.cryptoeye.app')
-
-
 @router.message()
 async def message_handler(message: types.Message) -> Any:
     print("hi from router...")
@@ -297,16 +295,26 @@ async def message_handler(message: types.Message) -> Any:
     print(message)
 
 
+async def tx_hash_handler(request):
+    print("in tx hash handler...")
+    print(request)
+    return web.Response(text="Custom response")
+
+
+async def on_startup(dispatcher: Dispatcher, bot: Bot):
+    await bot.set_webhook(f'https://rangobot.cryptoeye.app')
+
+
 def webhook_main():
     dp.startup.register(on_startup)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()
+    app.router.add_route('GET', '/tx_hash', tx_hash_handler)
     webhook_requests_handler = SimpleRequestHandler(
         dispatcher=dp,
         bot=bot,
     )
     # Register webhook handler on application
-    webhook_requests_handler.register(app, path="/tx_hash")
     webhook_requests_handler.register(app, path="")
 
     # Mount dispatcher startup and shutdown hooks to aiohttp application
