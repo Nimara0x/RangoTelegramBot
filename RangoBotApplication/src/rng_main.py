@@ -4,13 +4,12 @@ import logging
 import asyncio
 from collections import defaultdict
 from os import environ
-from typing import Any
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 import config
-from aiogram import Bot, Dispatcher, types, Router
+from aiogram import Bot, Dispatcher, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, CallbackQuery, Update
+from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from rango_client import RangoClient
 from aiohttp import web
@@ -232,7 +231,7 @@ async def check_approval_status_looper(message: Message, request_id: str):
         await asyncio.sleep(1)
         retry += 1
         print(f"retry: {retry}, approve status: {is_approved}")
-        if retry > 20:
+        if retry > 50:
             return False
     print(f"out of loop, approve status: {is_approved}")
     if is_approved:
@@ -281,24 +280,12 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 
-@router.message()
-async def message_handler(message: types.Message) -> Any:
-    print("hi from router...")
-    print(message)
-
-
-@dp.message()
-async def message_handler(message: types.Message) -> Any:
-    print("hi from dp handler...")
-    print(message)
-
-
-async def tx_hash_handler(request):
-    print("in tx hash handler...")
+async def check_status_handler(request):
+    print("in check_status_handler...")
     tx_hash = request.query.get('tx_hash', None)
+    tx_hash = request.query.get('request_id', None)
     print(tx_hash)
-    print(request.query)
-    return web.Response(text="Custom response")
+    return web.Response(text="Received!")
 
 
 async def on_startup(dispatcher: Dispatcher, bot: Bot):
@@ -309,7 +296,7 @@ def webhook_main():
     dp.startup.register(on_startup)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()
-    app.router.add_route('GET', '/tx_hash', tx_hash_handler)
+    app.router.add_route('GET', '/check_status', check_status_handler)
     webhook_requests_handler = SimpleRequestHandler(
         dispatcher=dp,
         bot=bot,

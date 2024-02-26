@@ -128,7 +128,9 @@ class RangoClient(Singleton):
         response: dict = await self.__request(url, "POST", data=payload)
         print(response)
         if response['ok']:
-            tx: json = json.dumps(response['transaction'])
+            resp_tx = response['transaction']
+            resp_tx['reqId'] = request_id
+            tx: json = json.dumps(resp_tx)
             encoded_string = base64.b64encode(tx.encode()).decode()
             # wallet_url = f'https://metamask.app.link/dapp/test-dapp-pearl.vercel.app/?param={encoded_string}'
             wallet_url = f'https://test-dapp-pearl.vercel.app/?param={encoded_string}'
