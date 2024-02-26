@@ -164,6 +164,7 @@ async def confirm_swap(message: Message, request_id: str):
         mk_b.button(text='Sign Transaction', url=sign_tx_or_error)
         message = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
         message_id_map[user_id] = message.message_id
+        print(f'last msg id before callback => {message_id_map[user_id]}')
         return
     else:
         message = await message.edit_text(text=sign_tx_or_error, inline_message_id=msg_id)
