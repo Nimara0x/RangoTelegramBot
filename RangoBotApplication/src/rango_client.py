@@ -111,7 +111,7 @@ class RangoClient(Singleton):
         print(swap_path)
         return request_id, swap_path
 
-    async def create_transaction(self, tg_user_id: str, request_id: str, step: int = 1, slippage: int = 2):
+    async def create_transaction(self, tg_user_id: int, request_id: str, step: int = 1, slippage: int = 2):
         url = f"tx/create"
         payload = {
             "userSettings": {

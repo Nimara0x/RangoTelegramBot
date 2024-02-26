@@ -147,7 +147,7 @@ async def confirm_swap(message: Message, request_id: str):
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
     request_latest_step[request_id] = request_latest_step.get(request_id, 0) + 1
-    is_success, sign_tx_or_error = await rango_client.create_transaction(request_id, user_id)
+    is_success, sign_tx_or_error = await rango_client.create_transaction(user_id, request_id)
     approved_before = await only_check_approval_status_looper(max_retry=2, request_id=request_id)
     if is_success and not approved_before:
         msg = f"Please approve the tx by clicking on the button 👇 \n" \
@@ -175,7 +175,7 @@ async def sign_tx(message: Message, request_id: str):
     print(message)
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
-    is_success, sign_tx_url = await rango_client.create_transaction(request_id, user_id)
+    is_success, sign_tx_url = await rango_client.create_transaction(user_id, request_id)
     if is_success:
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
@@ -244,7 +244,7 @@ async def check_approval_status_looper(message: Message, request_id: str):
     return True
 
 
-async def check_tx_sign_status_looper(bot: Bot, user_id: str, request_id: str, tx_id: str, step: int):
+async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str, step: int):
     msg_id = message_id_map[user_id]
     print("Check tx sign status looper is called, req: request_id")
     is_tx_signed, tx = False, None
@@ -284,12 +284,12 @@ async def check_status_handler(request):
     print("in check_status_handler...")
     tx_hash = request.query.get('tx_hash', None)
     request_id = request.query.get('request_id', None)
-    tg_user_id = request.query.get('tg_user_id', None)
+    tg_user_id = int(request.query.get('tg_user_id', None))
     print(tx_hash)
     print(request_id)
     print(tg_user_id)
     step = request_latest_step[request_id]
-    asyncio.create_task(check_tx_sign_status_looper(bot, tg_user_id, request_id, tx_hash, step))
+    asyncio.create_task(check_tx_sign_status_looper(tg_user_id, request_id, tx_hash, step))
     return web.Response(text="Received!")
 
 
