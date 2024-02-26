@@ -291,9 +291,14 @@ async def message_handler(message: types.Message) -> Any:
     print(message)
 
 
+@dp.message()
+async def message_handler(message: types.Message) -> Any:
+    print("hi from dp handler...")
+    print(message)
+
+
 def webhook_main():
     dp.startup.register(on_startup)
-    dp.include_router(router)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()
     webhook_requests_handler = SimpleRequestHandler(
