@@ -252,7 +252,6 @@ async def on_startup(bot: Bot) -> None:
 
 
 def webhook_main():
-    dp.include_router(router)
     dp.startup.register(on_startup)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()
