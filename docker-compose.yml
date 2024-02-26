@@ -3,4 +3,6 @@ version: '3'
 services:
   rango-bot:
     build: .
+    expose:
+      - 8085
     command: bash -c "python src/rng_main.py"
