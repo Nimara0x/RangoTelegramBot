@@ -9,3 +9,9 @@ services:
     ports:
       - "8070:8070"
     command: bash -c "python src/rng_main.py"
+    networks:
+      - crypto_net
+
+networks:
+  crypto_net:
+    external: true
