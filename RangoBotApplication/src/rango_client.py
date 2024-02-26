@@ -4,8 +4,8 @@ from typing import Optional
 import asyncio, base64
 from aiogram.client.session import aiohttp
 
-from src.rango_entities import TransactionObject
-from utils import Singleton, amount_to_human_readable
+from rango_entities import TransactionObject
+from utils import Singleton
 import config
 
 
