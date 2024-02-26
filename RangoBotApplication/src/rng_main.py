@@ -4,6 +4,8 @@ import logging
 import asyncio
 from collections import defaultdict
 from os import environ
+
+import aiohttp_cors
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 import config
 from aiogram import Bot, Dispatcher, Router
@@ -308,6 +310,19 @@ def webhook_main():
 
     # Mount dispatcher startup and shutdown hooks to aiohttp application
     setup_application(app, dp, bot=bot)
+
+    # Configure CORS
+    cors = aiohttp_cors.setup(app, defaults={
+        "*": aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
+    })
+
+    # Apply CORS to all routes
+    for route in list(app.router.routes()):
+        cors.add(route)
 
     # Port for incoming request from reverse proxy. Should be any available port
     web.run_app(app, host=WEB_SERVER_HOST, port=int(WEB_SERVER_PORT))
