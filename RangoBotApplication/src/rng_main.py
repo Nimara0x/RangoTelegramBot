@@ -22,6 +22,7 @@ dp = Dispatcher()
 router = Router()
 dp.include_router(router)
 rango_client = RangoClient()
+bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
 users_wallets_dict = defaultdict(set)
 users_active_wallet_dict = defaultdict(set)
 message_id_map = {}
@@ -279,7 +280,7 @@ async def main() -> None:
     await dp.start_polling(bot)
 
 
-async def check_status_handler(request, bot: Bot):
+async def check_status_handler(request):
     print("in check_status_handler...")
     tx_hash = request.query.get('tx_hash', None)
     request_id = request.query.get('request_id', None)
@@ -298,7 +299,6 @@ async def on_startup(dispatcher: Dispatcher, bot: Bot):
 
 def webhook_main():
     dp.startup.register(on_startup)
-    bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()
     app.router.add_route('GET', '/check_status', check_status_handler)
     webhook_requests_handler = SimpleRequestHandler(
