@@ -26,7 +26,7 @@ request_latest_step = defaultdict(int)
 # bind localhost only to prevent any external access
 WEB_SERVER_HOST = "localhost"
 # Port for incoming request from reverse proxy. Should be any available port
-WEB_SERVER_PORT = 8090
+WEB_SERVER_PORT = 8085
 
 
 @dp.message(CommandStart())
