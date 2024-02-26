@@ -2,9 +2,10 @@ import sys
 import logging
 import asyncio
 from collections import defaultdict
+from os import environ
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 import config
-from aiogram import Bot, Dispatcher, Router
+from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
@@ -15,18 +16,14 @@ from utils import amount_to_human_readable
 
 logger = logging.getLogger(__file__)
 
-dp = Dispatcher()
-router = Router()
 rango_client = RangoClient()
 users_wallets_dict = defaultdict(set)
 users_active_wallet_dict = defaultdict(set)
 message_id_map = {}
 request_latest_step = defaultdict(int)
 
-# bind localhost only to prevent any external access
-WEB_SERVER_HOST = "127.0.0.1"
-# Port for incoming request from reverse proxy. Should be any available port
-WEB_SERVER_PORT = 8070
+
+WEB_SERVER_HOST, WEB_SERVER_PORT = environ.get("HOST", "127.0.0.1"), environ.get("PORT", "8070")
 
 
 @dp.message(CommandStart())
@@ -252,6 +249,7 @@ async def on_startup(bot: Bot) -> None:
 
 
 def webhook_main():
+    dp = Dispatcher()
     dp.startup.register(on_startup)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()

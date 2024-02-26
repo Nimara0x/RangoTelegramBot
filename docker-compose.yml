@@ -3,6 +3,9 @@ version: '3'
 services:
   rango-bot:
     build: .
-    expose:
-      - 8085
+    environment:
+      HOST: 127.0.0.1
+      PORT: 8070
+    ports:
+      - "8070:8070"
     command: bash -c "python src/rng_main.py"
