@@ -295,7 +295,9 @@ async def message_handler(message: types.Message) -> Any:
 
 async def tx_hash_handler(request):
     print("in tx hash handler...")
-    print(request.params)
+    tx_hash = request.query.get('tx_hash', None)
+    print(request.tx_hash)
+    print(request.query)
     return web.Response(text="Custom response")
 
 
