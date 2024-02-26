@@ -138,6 +138,7 @@ class RangoClient(Singleton):
     async def check_approval(self, request_id: str) -> bool:
         url = f"tx/{request_id}/check-approval"
         response: dict = await self.__request(url, "GET")
+        print(response)
         return response["isApproved"]
 
     async def check_tx(self, request_id: str, tx_id: str, step: int) -> TransactionObject:
