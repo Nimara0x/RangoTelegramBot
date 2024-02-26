@@ -15,7 +15,7 @@ from aiohttp import web
 from utils import amount_to_human_readable
 
 logger = logging.getLogger(__file__)
-
+dp = Dispatcher()
 rango_client = RangoClient()
 users_wallets_dict = defaultdict(set)
 users_active_wallet_dict = defaultdict(set)
@@ -249,7 +249,6 @@ async def on_startup(bot: Bot) -> None:
 
 
 def webhook_main():
-    dp = Dispatcher()
     dp.startup.register(on_startup)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()
