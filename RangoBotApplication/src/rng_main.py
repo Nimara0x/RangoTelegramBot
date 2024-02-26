@@ -13,6 +13,8 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from rango_client import RangoClient
 from aiohttp import web
+
+from src.middleware import txHashReceiverMiddleware
 from utils import amount_to_human_readable
 
 logger = logging.getLogger(__file__)
@@ -283,6 +285,7 @@ async def on_startup(bot: Bot) -> None:
 
 
 def webhook_main():
+    dp.message.middleware.setup(txHashReceiverMiddleware())
     dp.startup.register(on_startup)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()
