@@ -4,20 +4,22 @@ import logging
 import asyncio
 from collections import defaultdict
 from os import environ
+from typing import Any
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 import config
-from aiogram import Bot, Dispatcher
+from aiogram import Bot, Dispatcher, types, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, Update
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from rango_client import RangoClient
 from aiohttp import web
-from middleware import txHashReceiverMiddleware
 from utils import amount_to_human_readable
 
 logger = logging.getLogger(__file__)
 dp = Dispatcher()
+router = Router()
+dp.include_router(router)
 rango_client = RangoClient()
 users_wallets_dict = defaultdict(set)
 users_active_wallet_dict = defaultdict(set)
@@ -283,8 +285,13 @@ async def on_startup(bot: Bot) -> None:
     await bot.set_webhook(f'https://rangobot.cryptoeye.app')
 
 
+@router.message()
+async def message_handler(message: types.Message) -> Any:
+    print("hi from router...")
+    print(message)
+
+
 def webhook_main():
-    dp.message.middleware.setup(txHashReceiverMiddleware())
     dp.startup.register(on_startup)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
     app = web.Application()
@@ -293,6 +300,7 @@ def webhook_main():
         bot=bot,
     )
     # Register webhook handler on application
+    webhook_requests_handler.register(app, path="/tx_hash")
     webhook_requests_handler.register(app, path="")
 
     # Mount dispatcher startup and shutdown hooks to aiohttp application
