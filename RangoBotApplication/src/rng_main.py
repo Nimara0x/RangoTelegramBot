@@ -255,8 +255,6 @@ def webhook_main():
     dp.include_router(router)
     dp.startup.register(on_startup)
     bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
-    bot_info = bot.get_me()
-    print(bot_info)
     app = web.Application()
     webhook_requests_handler = SimpleRequestHandler(
         dispatcher=dp,
