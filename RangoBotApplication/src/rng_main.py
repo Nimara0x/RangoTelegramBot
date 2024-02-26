@@ -263,7 +263,7 @@ def webhook_main():
     setup_application(app, dp, bot=bot)
 
     # Port for incoming request from reverse proxy. Should be any available port
-    web.run_app(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)
+    web.run_app(app, host=WEB_SERVER_HOST, port=int(WEB_SERVER_PORT))
 
 
 if __name__ == "__main__":
