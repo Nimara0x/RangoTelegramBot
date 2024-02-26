@@ -1,3 +1,4 @@
+import os
 import sys
 import logging
 import asyncio
@@ -284,5 +285,8 @@ def webhook_main():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
-    # asyncio.run(main())
-    webhook_main()
+    is_test = os.environ.get('DEVELOPMENT', False)
+    if is_test:
+        asyncio.run(main())
+    else:
+        webhook_main()
