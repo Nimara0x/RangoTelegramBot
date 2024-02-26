@@ -155,20 +155,20 @@ async def confirm_swap(message: Message, request_id: str):
         mk_b = InlineKeyboardBuilder()
         mk_b.button(text='Approve Transaction', url=sign_tx_or_error)
         asyncio.create_task(check_approval_status_looper(message, request_id))
-        message = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
-        message_id_map[user_id] = str(message.message_id)
+        res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
+        message_id_map[user_id] = str(res.message_id)
         return
     elif approved_before and is_success:
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
         mk_b.button(text='Sign Transaction', url=sign_tx_or_error)
-        message = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
-        message_id_map[user_id] = str(message.message_id)
+        res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
+        message_id_map[user_id] = str(res.message_id)
         print(f'last msg id before callback => {message_id_map[user_id]}')
         return
     else:
-        message = await message.edit_text(text=sign_tx_or_error, inline_message_id=msg_id)
-        message_id_map[user_id] = str(message.message_id)
+        res = await message.edit_text(text=sign_tx_or_error, inline_message_id=msg_id)
+        message_id_map[user_id] = str(res.message_id)
 
 
 async def sign_tx(message: Message, request_id: str):
@@ -181,12 +181,12 @@ async def sign_tx(message: Message, request_id: str):
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
         mk_b.button(text='Sign Transaction', url=sign_tx_url)
-        message = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
-        message_id_map[user_id] = str(message.message_id)
+        res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
+        message_id_map[user_id] = str(res.message_id)
         return
     else:
-        message = await message.edit_text(text=f"An error has occurred!", inline_message_id=msg_id)
-        message_id_map[user_id] = str(message.message_id)
+        res = await message.edit_text(text=f"An error has occurred!", inline_message_id=msg_id)
+        message_id_map[user_id] = str(res.message_id)
         return
 
 
@@ -250,6 +250,7 @@ async def check_approval_status_looper(message: Message, request_id: str):
 
 
 async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str, step: int):
+    print(message_id_map)
     msg_id = message_id_map[user_id]
     print(f'msg_id: {msg_id}, user_id: {user_id}')
     print(f"Check tx sign status looper is called, req: {request_id}, user_id: {user_id}, step: {step}")
@@ -270,7 +271,7 @@ async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str,
               '🔹 route: %s \n' \
               '🔹 Output amount: %s \n' \
               '%s' % (route, tx.get_output_amount(), tx.print_explorer_urls())
-        return await bot.edit_message_text(text=msg, chat_id=user_id, inline_message_id=msg_id)
+        return await bot.edit_message_text(text=msg, chat_id=user_id, message_id=int(msg_id))
     if tx:
         msg = tx.extraMessage
     else:
