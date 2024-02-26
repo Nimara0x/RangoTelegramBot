@@ -238,7 +238,7 @@ async def check_approval_status_looper(message: Message, request_id: str):
         await asyncio.sleep(1)
         retry += 1
         print(f"retry: {retry}, approve status: {is_approved}")
-        if retry > 50:
+        if retry > 100:
             return False
     print(f"out of loop, approve status: {is_approved}")
     if is_approved:
@@ -263,7 +263,7 @@ async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str,
         await asyncio.sleep(2)
         retry += 1
         print(f"retry: {retry}, approve status: {is_tx_signed}")
-        if retry > 50:
+        if retry > 100:
             return False
     print(f"out of loop, approve status: {is_tx_signed}")
     if is_tx_signed and tx:
