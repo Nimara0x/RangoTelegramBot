@@ -155,20 +155,20 @@ async def confirm_swap(message: Message, request_id: str):
         mk_b = InlineKeyboardBuilder()
         mk_b.button(text='Approve Transaction', url=sign_tx_or_error)
         asyncio.create_task(check_approval_status_looper(message, request_id))
-        await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
-        # message_id_map[user_id] = str(message.message_id)
+        message = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
+        message_id_map[user_id] = str(message.message_id)
         return
     elif approved_before and is_success:
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
         mk_b.button(text='Sign Transaction', url=sign_tx_or_error)
-        await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
-        # message_id_map[user_id] = str(message.message_id)
+        message = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
+        message_id_map[user_id] = str(message.message_id)
         print(f'last msg id before callback => {message_id_map[user_id]}')
         return
     else:
-        await message.edit_text(text=sign_tx_or_error, inline_message_id=msg_id)
-        # message_id_map[user_id] = str(message.message_id)
+        message = await message.edit_text(text=sign_tx_or_error, inline_message_id=msg_id)
+        message_id_map[user_id] = str(message.message_id)
 
 
 async def sign_tx(message: Message, request_id: str):
@@ -181,9 +181,13 @@ async def sign_tx(message: Message, request_id: str):
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
         mk_b.button(text='Sign Transaction', url=sign_tx_url)
-        return await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
+        message = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
+        message_id_map[user_id] = str(message.message_id)
+        return
     else:
-        return await message.edit_text(text=f"An error has occurred!", inline_message_id=msg_id)
+        message = await message.edit_text(text=f"An error has occurred!", inline_message_id=msg_id)
+        message_id_map[user_id] = str(message.message_id)
+        return
 
 
 @dp.callback_query(lambda call: True)
