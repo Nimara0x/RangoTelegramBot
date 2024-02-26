@@ -22,7 +22,7 @@ dp = Dispatcher()
 router = Router()
 dp.include_router(router)
 rango_client = RangoClient()
-bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
+bot = Bot(config.TOKEN, parse_mode=ParseMode.MARKDOWN)
 users_wallets_dict = defaultdict(set)
 users_active_wallet_dict = defaultdict(set)
 message_id_map = {}
@@ -157,6 +157,7 @@ async def confirm_swap(message: Message, request_id: str):
         asyncio.create_task(check_approval_status_looper(message, request_id))
         res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
         message_id_map[user_id] = str(res.message_id)
+        print(f'last msg id before callback => {message_id_map[user_id]}')
         return
     elif approved_before and is_success:
         msg = f"Please sign the tx by clicking on the button 👇"

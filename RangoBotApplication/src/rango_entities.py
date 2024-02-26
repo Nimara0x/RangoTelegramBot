@@ -44,5 +44,5 @@ class TransactionObject:
     def print_explorer_urls(self):
         msg = ''
         for ex in self.explorerUrl:
-            msg += f'🔹 [{ex.url}](Explorer Link) -> {ex.description} \n'
+            msg += f'🔹 [Explorer Link]({ex.url}) -> {ex.description} \n'
             return msg
