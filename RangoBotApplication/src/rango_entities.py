@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Optional, List
 from dataclasses_json import dataclass_json
+from decimal import Decimal
 
 
 @dataclass_json
@@ -38,7 +39,7 @@ class TransactionObject:
         return self.status == "success"
 
     def get_output_amount(self) -> str:
-        return '%3.f' % self.outputAmount
+        return '%.3f' % Decimal(self.outputAmount)
 
     def print_explorer_urls(self):
         msg = ''
