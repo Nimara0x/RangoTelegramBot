@@ -246,7 +246,7 @@ async def check_approval_status_looper(message: Message, request_id: str):
 
 async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str, step: int):
     msg_id = message_id_map[user_id]
-    print("Check tx sign status looper is called, req: request_id")
+    print(f"Check tx sign status looper is called, req: {request_id}, user_id: {user_id}, step: {step}")
     is_tx_signed, tx = False, None
     retry = 0
     while not is_tx_signed:
@@ -273,7 +273,6 @@ async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str,
 
 
 async def main() -> None:
-    bot = Bot(config.TOKEN, parse_mode=ParseMode.MARKDOWN)
     bot_info = await bot.get_me()
     print(bot_info)
     await bot.delete_webhook(drop_pending_updates=True)  # skip_updates = True
