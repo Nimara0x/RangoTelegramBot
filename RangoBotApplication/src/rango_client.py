@@ -63,8 +63,8 @@ class RangoClient(Singleton):
         for bwa in wallet_addresses:
             list_params.append(f'address={bwa}')
         response: dict = await self.__request(url, "GET", list_params=list_params)
+        print(response)
         balances = response.get('wallets')[0]['balances']
-        print(balances)
         return balances
 
     async def route(self, _connected_wallets: list, selected_wallets: dict, from_blockchain: str,
