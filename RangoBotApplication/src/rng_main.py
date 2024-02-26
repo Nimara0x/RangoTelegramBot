@@ -141,7 +141,8 @@ async def confirm_swap(message: Message, request_id: str):
     is_success, sign_tx_or_error = await rango_client.create_transaction(request_id)
     approved_before = await only_check_approval_status_looper(max_retry=2, request_id=request_id)
     if is_success and not approved_before:
-        msg = f"Please approve the tx by clicking on the button 👇"
+        msg = f"Please approve the tx by clicking on the button 👇 \n" \
+              f"Waiting for you approval...'"
         mk_b = InlineKeyboardBuilder()
         mk_b.button(text='Approve Transaction', url=sign_tx_or_error)
         asyncio.create_task(check_approval_status_looper(message, request_id))
@@ -216,8 +217,6 @@ async def check_approval_status_looper(message: Message, request_id: str):
     user_id = message.chat.id
     is_approved = False
     msg_id = message_id_map[user_id]
-    msg = 'Waiting for you approval...'
-    await message.edit_text(text=msg, inline_message_id=msg_id)
     retry = 0
     while not is_approved:
         is_approved = await rango_client.check_approval(request_id)
