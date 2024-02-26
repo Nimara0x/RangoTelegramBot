@@ -23,6 +23,11 @@ users_active_wallet_dict = defaultdict(set)
 message_id_map = {}
 request_latest_step = defaultdict(int)
 
+# bind localhost only to prevent any external access
+WEB_SERVER_HOST = "localhost"
+# Port for incoming request from reverse proxy. Should be any available port
+WEB_SERVER_PORT = 8090
+
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
@@ -243,7 +248,7 @@ async def main() -> None:
 
 
 async def on_startup(bot: Bot) -> None:
-    await bot.set_webhook('https://rango-bot.thevahidkaya.workers.dev/')
+    await bot.set_webhook(f'https://rangobot.cryptoeye.app')
 
 
 def webhook_main():
@@ -264,9 +269,7 @@ def webhook_main():
     setup_application(app, dp, bot=bot)
 
     # Port for incoming request from reverse proxy. Should be any available port
-    # WEB_SERVER_PORT = 8080
-    # And finally start webserver
-    web.run_app(app, host="localhost", port=8080)
+    web.run_app(app, host=WEB_SERVER_HOST, port=WEB_SERVER_PORT)
 
 
 if __name__ == "__main__":
