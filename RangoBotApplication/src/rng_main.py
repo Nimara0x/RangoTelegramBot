@@ -49,7 +49,6 @@ async def command_start_handler(message: Message):
 
 @dp.message(Command('wallets'))
 async def wallets(message: Message):
-    print(message)
     user_id = message.chat.id
     text = ''.join(message.text.split(' ')[1:])
     if text:
@@ -61,7 +60,6 @@ async def wallets(message: Message):
         if not users_wallets_dict[user_id]:
             msg = "💳 You don't have any wallets. Add your first wallet like this: /wallets BSC.0x123..."
             return await message.answer(text=msg)
-    print(users_wallets_dict)
     wallets_msg = 'Your wallets: \n\n'
     if len(users_wallets_dict[user_id]) > 0 and not users_active_wallet_dict.get(user_id):
         for wallet in users_wallets_dict[user_id]:
@@ -106,7 +104,8 @@ async def swap(message: Message):
     mk_b = InlineKeyboardBuilder()
     mk_b.button(text='Confirm Swap', callback_data=f'confirmSwap|{request_id}')
     msg = "🦶 The best route is: \n\n" \
-          "🔹 %s \n \n Do you want to continue with this route" % best_route
+          "🔹 %s \n \n " \
+          "❓If you're happy with the rate, confirm the swap" % best_route
     message = await message.answer(text=msg, reply_markup=mk_b.as_markup())
     print(message)
     message_id_map[user_id] = str(message.message_id)
@@ -115,16 +114,22 @@ async def swap(message: Message):
 @dp.message(Command('balance'))
 async def balance(message: Message):
     print(message)
+    user_id = message.chat.id
+    user_wallets = users_wallets_dict[user_id]
     text = ''.join(message.text.split(' ')[1:])
-    blockchain, wallet_address = text.split('.')
-    blockchain: str = blockchain.upper()
-    balances = await rango_client.balance(blockchain, wallet_address)
+    if text:
+        wallet_addresses = [text]
+    elif user_wallets:
+        wallet_addresses = list(user_wallets)
+    else:
+        return message.answer(text='Please add your wallets by typing /wallets Blockchain.Address like BSC.0x...')
+    balances = await rango_client.balance(wallet_addresses)
     balance_msg = ''
     for balance in balances:
         asset = balance['asset']
         amount = balance['amount']
         balance_msg += f"💰 {asset['symbol']}: {amount_to_human_readable(amount['amount'], amount['decimals'], 3)} \n"
-    await message.answer(text=balance_msg)
+    return await message.answer(text=balance_msg)
 
 
 async def confirm_swap(message: Message, request_id: str):
@@ -208,7 +213,11 @@ async def only_check_approval_status_looper(max_retry: int, request_id: str):
 
 async def check_approval_status_looper(message: Message, request_id: str):
     print(f"Check approval status looper is called, req: {request_id}")
+    user_id = message.chat.id
     is_approved = False
+    msg_id = message_id_map[user_id]
+    msg = 'Waiting for you approval...'
+    await message.edit_text(text=msg, inline_message_id=msg_id)
     retry = 0
     while not is_approved:
         is_approved = await rango_client.check_approval(request_id)
@@ -220,6 +229,8 @@ async def check_approval_status_looper(message: Message, request_id: str):
     print(f"out of loop, approve status: {is_approved}")
     if is_approved:
         print("TX is approved, calling send sign tx...")
+        msg = '✅ Transaction is approved!'
+        await message.edit_text(text=msg, inline_message_id=msg_id)
         return await sign_tx(message, request_id)
     return True
 

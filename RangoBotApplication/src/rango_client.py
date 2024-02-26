@@ -29,14 +29,20 @@ class RangoClient(Singleton):
             if token['blockchain'] == blockchain.upper() and token['address'] == token_address.lower():
                 return token
 
-    async def __request(self, url: str, method: str, data=None) -> dict:
+    async def __request(self, url: str, method: str, data=None, extra_params=None, list_params=None) -> dict:
+        if extra_params is None:
+            extra_params = {}
         if data is None:
             data = {}
 
         params = {
             'apiKey': self.api_key
         }
+        params.update(extra_params)
         encoded_params = '&'.join([f"{key}={value}" for key, value in params.items()])
+        if list_params:
+            encoded_params += '&'
+            encoded_params += '&'.join([param for param in list_params])
         base_url = self.base_url + url
         req_url = base_url + '?' + encoded_params
         headers = {"accept": "*/*", "content-type": "application/json"}
@@ -50,9 +56,12 @@ class RangoClient(Singleton):
                 response = await resp.json()
                 return response
 
-    async def balance(self, blockchain: str, wallet_address: str):
-        url = f"wallets/details?address={blockchain}.{wallet_address}"
-        response: dict = await self.__request(url, "GET")
+    async def balance(self, wallet_addresses: list[str]):
+        url = f"wallets/details"
+        list_params = []
+        for bwa in wallet_addresses:
+            list_params.append(f'address={bwa}')
+        response: dict = await self.__request(url, "GET", list_params=list_params)
         balances = response.get('wallets')[0]['balances']
         print(balances)
         return balances
