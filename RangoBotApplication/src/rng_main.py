@@ -246,6 +246,7 @@ async def check_approval_status_looper(message: Message, request_id: str):
 
 async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str, step: int):
     msg_id = message_id_map[user_id]
+    print(f'msg_id: {msg_id}, user_id: {user_id}')
     print(f"Check tx sign status looper is called, req: {request_id}, user_id: {user_id}, step: {step}")
     is_tx_signed, tx = False, None
     retry = 0
@@ -264,12 +265,12 @@ async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str,
               '🔹 route: %s \n' \
               '🔹 Output amount: %s \n' \
               '%s' % (route, tx.get_output_amount(), tx.print_explorer_urls())
-        return await bot.edit_message_text(text=msg, inline_message_id=msg_id)
+        return await bot.edit_message_text(text=msg, chat_id=user_id, inline_message_id=msg_id)
     if tx:
         msg = tx.extraMessage
     else:
         msg = 'An error has been occurred, please contact admin!'
-    return await bot.edit_message_text(text=msg, inline_message_id=msg_id)
+    return await bot.edit_message_text(text=msg, chat_id=user_id, inline_message_id=msg_id)
 
 
 async def main() -> None:
