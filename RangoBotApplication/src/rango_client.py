@@ -3,6 +3,8 @@ from decimal import Decimal
 from typing import Optional
 import asyncio, base64
 from aiogram.client.session import aiohttp
+
+from src.rango_entities import TransactionObject
 from utils import Singleton, amount_to_human_readable
 import config
 
@@ -128,13 +130,13 @@ class RangoClient(Singleton):
         response: dict = await self.__request(url, "GET")
         return response["isApproved"]
 
-    async def check_tx(self, request_id: str, tx_id: str, step: int) -> bool:
+    async def check_tx(self, request_id: str, tx_id: str, step: int) -> TransactionObject:
         url = f"tx/check-status"
         payload = {
             "requestId": request_id,
             "txId": tx_id,
             "step": step,
         }
-        response: dict = await self.__request(url, "POST", data=payload)
-        print(response)
-        return response["success"]
+        response_json: json = await self.__request(url, "POST", data=payload)
+        transaction_object: TransactionObject = TransactionObject.from_json(response_json)
+        return transaction_object

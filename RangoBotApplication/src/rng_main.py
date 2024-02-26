@@ -21,6 +21,7 @@ users_wallets_dict = defaultdict(set)
 users_active_wallet_dict = defaultdict(set)
 message_id_map = {}
 request_latest_step = defaultdict(int)
+request_latest_route = defaultdict(str)
 
 
 WEB_SERVER_HOST, WEB_SERVER_PORT = environ.get("HOST", "127.0.0.1"), environ.get("PORT", "8070")
@@ -100,6 +101,7 @@ async def swap(message: Message):
     request_id, best_route = await rango_client.route(connected_wallets, selected_wallets, from_blockchain, from_token_address,
                                                       to_blockchain,
                                                       to_token_address, float(amount))
+    request_latest_route[user_id] = best_route
     mk_b = InlineKeyboardBuilder()
     mk_b.button(text='Confirm Swap', callback_data=f'confirmSwap|{request_id}')
     msg = "🦶 The best route is: \n\n" \
@@ -222,22 +224,36 @@ async def check_approval_status_looper(message: Message, request_id: str):
 
 
 async def check_tx_sign_status_looper(message: Message, request_id: str, tx_id: str, step: int):
+    user_id = message.chat.id
+    msg_id = message_id_map[user_id]
     print("Check tx sign status looper is called, req: request_id")
-    is_tx_signed = False
+    is_tx_signed, tx = False, None
     retry = 0
     while not is_tx_signed:
-        is_tx_signed = await rango_client.check_tx(request_id, tx_id, step)
+        tx = await rango_client.check_tx(request_id, tx_id, step)
+        is_tx_signed = tx.is_successful()
         await asyncio.sleep(2)
         retry += 1
         print(f"retry: {retry}, approve status: {is_tx_signed}")
-        if retry > 20:
+        if retry > 50:
             return False
     print(f"out of loop, approve status: {is_tx_signed}")
-    return True
+    if is_tx_signed and tx:
+        route = request_latest_route[user_id]
+        msg = '✅ Your swap with the following route has been successfully completed! \n' \
+              '🔹 route: %s \n' \
+              '🔹 Output amount: %s \n' \
+              '%s' % (route, tx.get_output_amount(), tx.print_explorer_urls())
+        return await message.edit_text(text=msg, inline_message_id=msg_id, )
+    if tx:
+        msg = tx.extraMessage
+    else:
+        msg = 'An error has been occurred, please contact admin!'
+    return await message.edit_text(text=msg, inline_message_id=msg_id)
 
 
 async def main() -> None:
-    bot = Bot(config.TOKEN, parse_mode=ParseMode.HTML)
+    bot = Bot(config.TOKEN, parse_mode=ParseMode.MARKDOWN)
     bot_info = await bot.get_me()
     print(bot_info)
     await bot.delete_webhook(drop_pending_updates=True)  # skip_updates = True

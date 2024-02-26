@@ -6,4 +6,5 @@ qrcode~=7.4.2
 redis~=5.0.1
 requests
 web3
+dataclasses-json
 SQLAlchemy
