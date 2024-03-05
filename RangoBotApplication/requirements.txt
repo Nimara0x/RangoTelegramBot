@@ -1,11 +1,7 @@
 aiogram>=3.1.1
-pytoniq-core>=0.1.10
-pytonconnect>=0.3.0
 python-dotenv>=1.0.0
 qrcode~=7.4.2
 redis~=5.0.1
-requests
-web3
-dataclasses-json
-aiohttp_cors
-SQLAlchemy
+web3==6.15.1
+dataclasses-json==0.6.4
+aiohttp_cors==0.7.0

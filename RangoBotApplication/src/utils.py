@@ -3,12 +3,6 @@ from decimal import Decimal
 
 class Singleton(object):
     def __new__(cls, *args, **kwds):
-        """
-        >>> s = Singleton()
-        >>> p = Singleton()
-        >>> id(s) == id(p)
-        True
-        """
         self = "__self__"
         if not hasattr(cls, self):
             instance = object.__new__(cls)

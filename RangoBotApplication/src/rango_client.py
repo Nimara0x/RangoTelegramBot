@@ -154,3 +154,4 @@ class RangoClient(Singleton):
         response_json = await self.__request(url, "POST", data=payload)
         transaction_object: TransactionObject = TransactionObject.from_dict(response_json)
         return transaction_object
+
