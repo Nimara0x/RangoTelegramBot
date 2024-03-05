@@ -1,10 +1,10 @@
 # Rango Telegram Bot 
 This is a simple Telegram Bot that can swap using Rango's API.
 
-### Install dependencies:
+### Run with docker:
 
 ```bash
-pip install -r requirements.txt
+docker-compose up -d
 ```
 
 ### Set up `.env`:
@@ -16,8 +16,11 @@ RANGO_BASE_URL='https://api.rango.exchange/'
 DEVELOPMENT='true' # For testing
 ```
 
-### Run bot
-
-```python
-python3 src/main.py
+### Running Bot Locally
+First install dependencies:
+```bash
+pip install -r src/requirements.txt
+python src/main.py
 ```
+
+Note that you need python +3.9 to run the project.
