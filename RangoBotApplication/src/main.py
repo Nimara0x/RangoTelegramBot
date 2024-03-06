@@ -91,7 +91,7 @@ async def swap(message: Message):
     try:
         from_blockchain_address, to_blockchain_address, amount = text.split(' ')
     except ValueError:
-        return await message.answer(text="Enter your desired swap amount at the end of text => /route "
+        return await message.answer(text="Enter your desired swap amount at the end of text => /swap "
                                          "BSC.token_address BSC.token_address 20")
     from_blockchain, from_token_address = from_blockchain_address.split('.')
     to_blockchain, to_token_address = to_blockchain_address.split('.')
@@ -164,6 +164,10 @@ async def confirm_swap(message: Message, request_id: str):
     msg_id = message_id_map[user_id]
     request_latest_step[request_id] = request_latest_step.get(request_id, 0) + 1
     is_success, sign_tx_or_error = await rango_client.create_transaction(user_id, request_id)
+    if not is_success:
+        res = await message.edit_text(text=f'❌ {sign_tx_or_error}', inline_message_id=msg_id)
+        message_id_map[user_id] = str(res.message_id)
+        return
     approved_before = await only_check_approval_status_looper(max_retry=2, request_id=request_id)
     if is_success and not approved_before:
         msg = f"Please approve the tx by clicking on the button 👇 \n" \

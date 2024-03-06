@@ -101,7 +101,8 @@ class RangoClient(Singleton):
             "checkPrerequisites": False,
             "connectedWallets": connected_wallets,
             "selectedWallets": selected_wallets,
-            "amount": amount
+            "amount": amount,
+            "maxLength": 1
         }
         response: dict = await self.__request(url, "POST", data=payload)
         best_route = response
@@ -134,16 +135,16 @@ class RangoClient(Singleton):
         }
         response: dict = await self.__request(url, "POST", data=payload)
         print(response)
-        if response['ok']:
-            resp_tx = response['transaction']
-            resp_tx['reqId'] = request_id
-            resp_tx['tgUserId'] = tg_user_id
-            tx: json = json.dumps(resp_tx)
-            encoded_string = base64.b64encode(tx.encode()).decode()
-            # wallet_url = f'https://metamask.app.link/dapp/test-dapp-pearl.vercel.app/?param={encoded_string}'
-            wallet_url = f'https://test-dapp-pearl.vercel.app/?param={encoded_string}'
-            return True, wallet_url
-        return False, response.get("error")
+        if not response['ok']:
+            return False, response.get("error")
+        resp_tx = response['transaction']
+        resp_tx['reqId'] = request_id
+        resp_tx['tgUserId'] = tg_user_id
+        tx: json = json.dumps(resp_tx)
+        encoded_string = base64.b64encode(tx.encode()).decode()
+        # wallet_url = f'https://metamask.app.link/dapp/test-dapp-pearl.vercel.app/?param={encoded_string}'
+        wallet_url = f'https://test-dapp-pearl.vercel.app/?param={encoded_string}'
+        return True, wallet_url
 
     async def check_approval(self, request_id: str) -> bool:
         url = f"tx/{request_id}/check-approval"
