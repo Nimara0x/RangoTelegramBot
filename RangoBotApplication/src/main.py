@@ -114,6 +114,21 @@ async def swap(message: Message):
     message_id_map[user_id] = str(message.message_id)
 
 
+@dp.message(Command('popular'))
+async def get_populars(message: Message):
+    tokens = await rango_client.popular_tokens()
+    tokens_msg, c = '', 1
+    for token in tokens:
+        if token["address"] is not None and len(token["address"]) > 5 and token['blockchain'] in ['POLYGON', 'BSC',
+                                                                                                  'ETH', 'ARBITRUM'] and \
+                token['symbol'] in ['USDT', 'USDC', 'DAI']:
+            tokens_msg += f'🔹 `{token["blockchain"]}.{token["symbol"]}` -> `{token["address"]}`\n'
+            c += 1
+        if c > 15:
+            break
+    return await message.answer(text=tokens_msg)
+
+
 @dp.message(Command('balance'))
 async def balance(message: Message):
     print(message)
@@ -134,8 +149,9 @@ async def balance(message: Message):
         if balances:
             for balance in balances:
                 asset = balance['asset']
+                address = asset.get('address', '')
                 amount = balance['amount']
-                balance_msg += f"\t ▪️ {asset['symbol']}: {amount_to_human_readable(amount['amount'], amount['decimals'], 3)} \n"
+                balance_msg += f"\t ▪️ {asset['symbol']} (`{address}`): {amount_to_human_readable(amount['amount'], amount['decimals'], 3)} \n"
         else:
             balance_msg += '\t ▪️ No assets! \n'
     return await message.answer(text=balance_msg)
@@ -189,24 +205,6 @@ async def sign_tx(message: Message, request_id: str):
         res = await message.edit_text(text=f"An error has occurred!", inline_message_id=msg_id)
         message_id_map[user_id] = str(res.message_id)
         return
-
-
-@dp.callback_query(lambda call: True)
-async def main_callback_handler(call: CallbackQuery):
-    await call.answer()
-    message = call.message
-    data = call.data
-    if data == "start":
-        await command_start_handler(message)
-    elif data == "balance":
-        await balance(message)
-    elif data == "wallets":
-        await wallets(message)
-    elif data == "swap":
-        await swap(message)
-    elif data.startswith("confirmSwap"):
-        _, request_id = data.split('|')
-        await confirm_swap(message, request_id)
 
 
 async def only_check_approval_status_looper(max_retry: int, request_id: str):
@@ -298,6 +296,26 @@ async def check_status_handler(request):
     step = request_latest_step[request_id]
     asyncio.create_task(check_tx_sign_status_looper(tg_user_id, request_id, tx_hash, step))
     return web.Response(text="Received!")
+
+
+@dp.callback_query(lambda call: True)
+async def main_callback_handler(call: CallbackQuery):
+    await call.answer()
+    message = call.message
+    data = call.data
+    if data == "start":
+        await command_start_handler(message)
+    elif data == "balance":
+        await balance(message)
+    elif data == "popular":
+        await get_populars(message)
+    elif data == "wallets":
+        await wallets(message)
+    elif data == "swap":
+        await swap(message)
+    elif data.startswith("confirmSwap"):
+        _, request_id = data.split('|')
+        await confirm_swap(message, request_id)
 
 
 async def on_startup(dispatcher: Dispatcher, bot: Bot):

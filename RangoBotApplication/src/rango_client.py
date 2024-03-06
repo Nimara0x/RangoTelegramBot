@@ -16,18 +16,25 @@ class RangoClient(Singleton):
         self.api_key = config.RANGO_API_KEY
         self.base_url = config.RANGO_BASE_URL
         self.meta = None
+        self._popular_tokens = None
         asyncio.run(self.post_init())
 
     async def post_init(self):
         url = f"meta"
         response: dict = await self.__request(url, "GET")
         self.meta = response
+        params = {'excludeNonPopulars': True}
+        popular_response: dict = await self.__request(url, "GET", extra_params=params)
+        self._popular_tokens = popular_response
         print('Meta has been initialized...')
 
     def __get_token_data(self, blockchain: str, token_address: Optional[str]):
         for token in self.meta['tokens']:
             if token['blockchain'] == blockchain.upper() and token['address'] == token_address.lower():
                 return token
+
+    async def popular_tokens(self):
+        return self._popular_tokens['popularTokens']
 
     async def __request(self, url: str, method: str, data=None, extra_params=None, list_params=None) -> dict:
         if extra_params is None:
