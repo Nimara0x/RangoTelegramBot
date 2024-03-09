@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 import sys
 import logging
@@ -37,19 +39,14 @@ WEB_SERVER_HOST, WEB_SERVER_PORT = environ.get("HOST", "127.0.0.1"), environ.get
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
-    user_id = message.chat.id
-    try:
-        request_id, tx_id = message.text.split(' ')[1].split("|")
-    except IndexError:
-        print('No input param has been identified, proceed with welcome message...')
-        msg = "Hey there! \n" \
-              "In Rango bot you can easily swap any token to any other token in just 2 steps! " \
-              "Please note that only EVM chains are currently supported, other chains will be added soon...\n" \
-              "First, connect your wallets with the following format: \n\n" \
-              "/wallets BSC.walletAddress\n" \
-              "ETH.walletAddress\n" \
-              "and other EVM chains"
-        return await message.answer(text=msg)
+    msg = "Hey there! \n" \
+          "In Rango bot you can easily swap any token to any other token in just 2 steps! " \
+          "Please note that only EVM chains are currently supported, other chains will be added soon...\n" \
+          "First, connect your wallets with the following format: \n\n" \
+          "/wallets BSC.walletAddress\n" \
+          "ETH.walletAddress\n" \
+          "and other EVM chains"
+    return await message.answer(text=msg)
 
 
 @dp.message(Command('wallets'))
@@ -126,7 +123,7 @@ async def swap(message: Message):
     mk_b.button(text='Confirm Swap', callback_data=f'confirmSwap|{request_id}')
     msg = "🔹 The best route is: \n\n" \
           "🛣 %s \n \n " \
-          "⛽️ %s \n \n " \
+          "⛽️ %s \n" \
           "❓If you're happy with the rate and the fee, confirm the swap" % (swap_path, fee_amount_msg)
     message = await message.answer(text=msg, reply_markup=mk_b.as_markup())
     print(message)
@@ -176,22 +173,36 @@ async def balance(message: Message):
     return await message.answer(text=balance_msg)
 
 
+def get_sign_tx_url(resp_tx) -> str:
+    tx: json = json.dumps(resp_tx)
+    encoded_string = base64.b64encode(tx.encode()).decode()
+    # sign_url = f'https://metamask.app.link/dapp/test-dapp-pearl.vercel.app/?param={encoded_string}'
+    sign_url = f'https://test-dapp-pearl.vercel.app/?param={encoded_string}'
+    return sign_url
+
+
 async def confirm_swap(message: Message, request_id: str):
     print("request_id: " + request_id)
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
     request_latest_step[request_id] = request_latest_step.get(request_id, 0) + 1
-    is_success, sign_tx_or_error = await rango_client.create_transaction(user_id, request_id)
+    response = await rango_client.create_transaction(request_id)
+    is_success, sign_tx_or_error = response['ok'], ''
     if not is_success:
+        sign_tx_or_error = response.get('error', '')
         res = await message.edit_text(text=f'❌ {sign_tx_or_error}', inline_message_id=msg_id)
         message_id_map[user_id] = str(res.message_id)
         return
+    resp_tx = response['transaction']
+    resp_tx['reqId'] = request_id
+    resp_tx['tgUserId'] = user_id
+    sign_url = get_sign_tx_url(resp_tx)
     approved_before = await only_check_approval_status_looper(max_retry=2, request_id=request_id)
     if is_success and not approved_before:
         msg = f"Please approve the tx by clicking on the button 👇 \n" \
               f"Waiting for you approval..."
         mk_b = InlineKeyboardBuilder()
-        mk_b.button(text='Approve Transaction', url=sign_tx_or_error)
+        mk_b.button(text='Approve Transaction', url=sign_url)
         asyncio.create_task(check_approval_status_looper(message, request_id))
         res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
         message_id_map[user_id] = str(res.message_id)
@@ -199,7 +210,7 @@ async def confirm_swap(message: Message, request_id: str):
     elif approved_before and is_success:
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
-        mk_b.button(text='Sign Transaction', url=sign_tx_or_error)
+        mk_b.button(text='Sign Transaction', url=sign_url)
         res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
         message_id_map[user_id] = str(res.message_id)
         return
@@ -213,11 +224,14 @@ async def sign_tx(message: Message, request_id: str):
     print(message)
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
-    is_success, sign_tx_url = await rango_client.create_transaction(user_id, request_id)
+    response = await rango_client.create_transaction(request_id)
+    is_success, sign_tx_or_error = response['ok'], ''
     if is_success:
+        resp_tx = response['transaction']
+        sign_url = get_sign_tx_url(resp_tx)
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
-        mk_b.button(text='Sign Transaction', url=sign_tx_url)
+        mk_b.button(text='Sign Transaction', url=sign_url)
         res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
         message_id_map[user_id] = str(res.message_id)
         return
@@ -253,7 +267,7 @@ async def check_approval_status_looper(message: Message, request_id: str):
     retry = 0
     while not is_approved:
         is_approved = await rango_client.check_approval(request_id)
-        await asyncio.sleep(1)
+        await asyncio.sleep(1.5)
         retry += 1
         print(f"retry: {retry}, approve status: {is_approved}")
         if retry > 100:
@@ -306,13 +320,9 @@ async def main() -> None:
 
 
 async def check_status_handler(request):
-    print("in check_status_handler...")
     tx_hash = request.query.get('tx_hash', None)
     request_id = request.query.get('request_id', None)
     tg_user_id = int(request.query.get('tg_user_id', None))
-    print(tx_hash)
-    print(request_id)
-    print(tg_user_id)
     step = request_latest_step[request_id]
     asyncio.create_task(check_tx_sign_status_looper(tg_user_id, request_id, tx_hash, step))
     return web.Response(text="Received!")
