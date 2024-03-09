@@ -1,7 +1,7 @@
-from typing import Optional
+from typing import Optional, Any
 import asyncio
 from aiogram.client.session import aiohttp
-from rango_response_entities import TransactionObject
+from rango_response_entities import TransactionObject, MetaResponse
 from rango_request_entities import BestRouteResponse
 from utils import Singleton
 import config
@@ -13,28 +13,33 @@ class RangoClient(Singleton):
         super().__init__()
         self.api_key = config.RANGO_API_KEY
         self.base_url = config.RANGO_BASE_URL
-        self.meta = None
+        self.__meta = None
         self._popular_tokens = None
         asyncio.run(self.post_init())
 
     async def post_init(self):
         url = f"meta"
-        response: dict = await self.__request(url, "GET")
-        self.meta = response
+        response_json: MetaResponse = await self.__request(url, "GET")
+        response_obj: MetaResponse = MetaResponse.from_dict(response_json)
+        self.__meta = response_obj
         params = {'excludeNonPopulars': True}
-        popular_response: dict = await self.__request(url, "GET", extra_params=params)
+        popular_response_json: MetaResponse = await self.__request(url, "GET", extra_params=params)
+        popular_response: MetaResponse = MetaResponse.from_dict(popular_response_json)
         self._popular_tokens = popular_response
         print('Meta has been initialized...')
 
     def __get_token_data(self, blockchain: str, token_address: Optional[str]):
-        for token in self.meta['tokens']:
+        for token in self.__meta['tokens']:
             if token['blockchain'] == blockchain.upper() and token['address'] == token_address.lower():
                 return token
+
+    async def get_meta(self) -> MetaResponse:
+        return self.__meta
 
     async def popular_tokens(self):
         return self._popular_tokens['popularTokens']
 
-    async def __request(self, url: str, method: str, data=None, extra_params=None, list_params=None) -> dict:
+    async def __request(self, url: str, method: str, data=None, extra_params=None, list_params=None) -> Any:
         if extra_params is None:
             extra_params = {}
         if data is None:

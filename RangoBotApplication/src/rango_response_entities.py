@@ -75,7 +75,6 @@ class SwapFee:
     name: str
 
 
-
 @dataclass_json
 @dataclass
 class SwapNode:
@@ -140,3 +139,58 @@ class BestRouteResponse:
     compareStatus: str
     from_: Asset = field(metadata=config(field_name='from'))
     to: Asset
+
+
+@dataclass_json
+@dataclass
+class Token:
+    blockchain: str
+    symbol: str
+    isPopular: bool
+    supportedSwappers: List[str]
+    image: Optional[str] = None
+    address: Optional[str] = None
+    usdPrice: Optional[float] = None
+    decimals: Optional[int] = None
+    name: Optional[str] = None
+    isSecondaryCoin: Optional[bool] = None
+    coinSource: Optional[str] = None
+    coinSourceUrl: Optional[str] = None
+
+
+@dataclass_json
+@dataclass
+class BlockchainMeta:
+    name: str
+    defaultDecimals: int
+    addressPatterns: List[str]
+    feeAssets: List[Asset]
+    logo: str
+    displayName: str
+    shortName: str
+    sort: int
+    color: str
+    enabled: bool
+    type: str
+    chainId: Optional[str] = None
+    info: Optional[dict] = None
+
+
+@dataclass_json
+@dataclass
+class SwapperMetaDto:
+    id: str
+    title: str
+    logo: str
+    swapperGroup: str
+    types: List[str]
+    enabled: bool
+
+
+@dataclass_json
+@dataclass
+class MetaResponse:
+    tokens: List[Token]
+    popularTokens: List[Token]
+    blockchains: List[BlockchainMeta]
+    swappers: List[SwapperMetaDto]

@@ -7,8 +7,10 @@ import asyncio
 from collections import defaultdict
 from decimal import Decimal
 from os import environ
+from typing import Any
 
 import aiohttp_cors
+from aiogram.handlers import MessageHandler
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
 import config
 from aiogram import Bot, Dispatcher, Router
@@ -35,18 +37,17 @@ request_latest_step = defaultdict(int)
 request_latest_route = defaultdict(str)
 
 WEB_SERVER_HOST, WEB_SERVER_PORT = environ.get("HOST", "127.0.0.1"), environ.get("PORT", "8070")
-WEBHOOK_URL = environ.get("HOST", "127.0.0.1")
 
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
     msg = "👋 Hey there! \n" \
-          "🤖 I'm Rango Exchange Bot! Here you can easily swap any token to any other token in the simplest form! " \
+          "🤖 I'm Rango Exchange Bot! Here you can easily swap any token to any other token in the simplest form! \n" \
           "❗️Please note that only EVM chains are currently supported, other chains will be added soon...\n" \
           "✅ First, connect your EVM wallets with the following format: \n\n" \
           "/wallets Blockchain.walletAddress Blockchain.walletAddress \n" \
           "For instance: 👇\n" \
-          "/wallets BSC.0x55d398326f99059ff775485246999027b3197955 POLYGON.0xa85BBA047F4a3ECBE1a695b632760dAE7E2DDF76"
+          "/wallets `BSC.0x55d398326f99059ff775485246999027b3197955` `POLYGON.0xa85BBA047F4a3ECBE1a695b632760dAE7E2DDF76`"
     return await message.answer(text=msg)
 
 
@@ -331,6 +332,38 @@ async def check_status_handler(request):
     return web.Response(text="Received!")
 
 
+@dp.message(Command('search'))
+async def search(message: Message):
+    user_query = ''.join(message.text.split(' ')[1:])
+    meta = await rango_client.get_meta()
+    result_msg, result_list = '', {}
+    for token in meta.tokens:
+        key = f'{token.blockchain}.{token.symbol}-{token.address}'
+        found = False
+        if token.symbol is not None:
+            if token.symbol.startswith(user_query.upper()):
+                if result_list.get(key) is None:
+                    found = True
+        # if token.name is not None:
+        #     if token.name.startswith(user_query.upper()):
+        #         if result_list.get(key) is None:
+        #             found = True
+        if token.address is not None:
+            if token.address.startswith((user_query.lower(), user_query.upper())):
+                if result_list.get(key) is None:
+                    found = True
+        if found:
+            result_list[key] = token
+            result_msg += f'🔹 `{token.blockchain}.{token.address}` - `{token.symbol}` \n'
+
+    if result_list:
+        msg = 'Found the following symbols: \n\n' \
+              '%s' % result_msg
+    else:
+        msg = 'Could not find any tokens...'
+    return await message.answer(text=msg)
+
+
 @dp.callback_query(lambda call: True)
 async def main_callback_handler(call: CallbackQuery):
     await call.answer()
@@ -349,6 +382,14 @@ async def main_callback_handler(call: CallbackQuery):
     elif data.startswith("confirmSwap"):
         _, request_id = data.split('|')
         await confirm_swap(message, request_id)
+    elif data == 'search':
+        await search(message)
+
+
+@router.message()
+async def message_handler(message: Message) -> Any:
+    msg = 'Please see the commands by typing /'
+    return await message.answer(text=msg)
 
 
 async def on_startup(dispatcher: Dispatcher, bot: Bot):
