@@ -165,7 +165,9 @@ async def balance(message: Message):
         if balances:
             for balance in balances:
                 asset = balance['asset']
-                address = asset.get('address', '')
+                address = asset.get('address')
+                if address == None:
+                    address = "Native"
                 amount = balance['amount']
                 balance_msg += f"\t ▪️ {asset['symbol']} (`{address}`): {amount_to_human_readable(amount['amount'], amount['decimals'], 3)} \n"
         else:
