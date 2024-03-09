@@ -45,7 +45,7 @@ async def command_start_handler(message: Message):
           "First, connect your EVM wallets with the following format: \n\n" \
           "/wallets Blockchain.walletAddress Blockchain.walletAddress \n" \
           "For instance: 👇\n" \
-          "BSC.0x55d398326f99059ff775485246999027b3197955"
+          "/wallets BSC.0x55d398326f99059ff775485246999027b3197955 POLYGON.0xa85BBA047F4a3ECBE1a695b632760dAE7E2DDF76"
     return await message.answer(text=msg)
 
 
