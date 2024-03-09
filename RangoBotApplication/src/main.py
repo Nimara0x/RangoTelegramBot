@@ -42,10 +42,10 @@ async def command_start_handler(message: Message):
     msg = "Hey there! \n" \
           "In Rango bot you can easily swap any token to any other token in just 2 steps! " \
           "Please note that only EVM chains are currently supported, other chains will be added soon...\n" \
-          "First, connect your wallets with the following format: \n\n" \
-          "/wallets BSC.walletAddress\n" \
-          "ETH.walletAddress\n" \
-          "and other EVM chains"
+          "First, connect your EVM wallets with the following format: \n\n" \
+          "/wallets Blockchain.walletAddress Blockchain.walletAddress \n" \
+          "For instance: \n" \
+          "BSC.0x55d398326f99059ff775485246999027b3197955"
     return await message.answer(text=msg)
 
 
