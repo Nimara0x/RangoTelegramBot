@@ -35,14 +35,15 @@ request_latest_step = defaultdict(int)
 request_latest_route = defaultdict(str)
 
 WEB_SERVER_HOST, WEB_SERVER_PORT = environ.get("HOST", "127.0.0.1"), environ.get("PORT", "8070")
+WEBHOOK_URL = environ.get("HOST", "127.0.0.1")
 
 
 @dp.message(CommandStart())
 async def command_start_handler(message: Message):
-    msg = "Hey there! \n" \
-          "In Rango bot you can easily swap any token to any other token in just 2 steps! " \
-          "Please note that only EVM chains are currently supported, other chains will be added soon...\n" \
-          "First, connect your EVM wallets with the following format: \n\n" \
+    msg = "👋 Hey there! \n" \
+          "🤖 I'm Rango Exchange Bot! Here you can easily swap any token to any other token in the simplest form! " \
+          "❗️Please note that only EVM chains are currently supported, other chains will be added soon...\n" \
+          "✅ First, connect your EVM wallets with the following format: \n\n" \
           "/wallets Blockchain.walletAddress Blockchain.walletAddress \n" \
           "For instance: 👇\n" \
           "/wallets BSC.0x55d398326f99059ff775485246999027b3197955 POLYGON.0xa85BBA047F4a3ECBE1a695b632760dAE7E2DDF76"
@@ -351,7 +352,7 @@ async def main_callback_handler(call: CallbackQuery):
 
 
 async def on_startup(dispatcher: Dispatcher, bot: Bot):
-    await bot.set_webhook(f'https://rangobot.cryptoeye.app')
+    await bot.set_webhook(config.WEBHOOK_URL)
 
 
 def webhook_main():

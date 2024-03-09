@@ -13,6 +13,7 @@ docker-compose up -d
 TOKEN='xxxx'  # your bot token here
 RANGO_API_KEY='YourRangoApi'
 RANGO_BASE_URL='https://api.rango.exchange/'
+WEBHOOK_URL='YourServerAddress'
 DEVELOPMENT='true' # For testing
 ```
 
