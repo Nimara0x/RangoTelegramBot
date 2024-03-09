@@ -1,10 +1,10 @@
 import json
-from decimal import Decimal
 from typing import Optional
 import asyncio, base64
 from aiogram.client.session import aiohttp
 
-from rango_entities import TransactionObject
+from rango_response_entities import TransactionObject
+from rango_request_entities import BestRouteResponse
 from utils import Singleton
 import config
 
@@ -76,7 +76,7 @@ class RangoClient(Singleton):
 
     async def route(self, _connected_wallets: list, selected_wallets: dict, from_blockchain: str,
                     from_token_address: str,
-                    to_blockchain: str, to_token_address: str, amount: float):
+                    to_blockchain: str, to_token_address: str, amount: float) -> BestRouteResponse:
         url = f"routing/best"
         from_token = self.__get_token_data(from_blockchain, from_token_address)
         to_token = self.__get_token_data(to_blockchain, to_token_address)
@@ -104,20 +104,9 @@ class RangoClient(Singleton):
             "amount": amount,
             "maxLength": 1
         }
-        response: dict = await self.__request(url, "POST", data=payload)
-        best_route = response
-        request_id = best_route['requestId']
-        swaps = best_route['result']['swaps']
-        swap_path = ''
-        for swap in swaps:
-            from_amount = '%.3f' % Decimal(swap["fromAmount"])
-            to_amount = '%.3f' % Decimal(swap["toAmount"])
-            from_blockchain_symbol = f'{from_amount} {swap["from"]["blockchain"]}.{swap["from"]["symbol"]}'
-            to_blockchain_symbol = f'{to_amount} {swap["to"]["blockchain"]}.{swap["to"]["symbol"]}'
-            swapper = f'{swap["swapperId"]} ({swap["swapperType"]})'
-            swap_path += from_blockchain_symbol + " -> " + swapper + " -> " + to_blockchain_symbol
-        print(swap_path)
-        return request_id, swap_path
+        response_json: dict = await self.__request(url, "POST", data=payload)
+        best_route: BestRouteResponse = BestRouteResponse.from_dict(response_json)
+        return best_route
 
     async def create_transaction(self, tg_user_id: int, request_id: str, step: int = 1, slippage: int = 2):
         url = f"tx/create"

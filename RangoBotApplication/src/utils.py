@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Union
 
 
 class Singleton(object):
@@ -17,6 +18,10 @@ class Singleton(object):
         pass
 
 
-def amount_to_human_readable(amount: str, decimal_places: int, fraction: int) -> str:
+def amount_to_human_readable(amount: Union[str, float], decimal_places: int, fraction: int) -> str:
     formatter = f'%.{fraction}f'
     return formatter % (Decimal(Decimal(amount) / (10 ** decimal_places)))
+
+
+def format_output_amount(amount: float) -> str:
+    return '%.5f' % Decimal(amount)

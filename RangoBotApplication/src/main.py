@@ -3,6 +3,7 @@ import sys
 import logging
 import asyncio
 from collections import defaultdict
+from decimal import Decimal
 from os import environ
 
 import aiohttp_cors
@@ -15,7 +16,9 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from rango_client import RangoClient
 from aiohttp import web
-from utils import amount_to_human_readable
+
+from rango_response_entities import BestRouteResponse
+from utils import amount_to_human_readable, format_output_amount
 
 logger = logging.getLogger(__file__)
 dp = Dispatcher()
@@ -28,7 +31,6 @@ users_active_wallet_dict = defaultdict(set)
 message_id_map = {}
 request_latest_step = defaultdict(int)
 request_latest_route = defaultdict(str)
-
 
 WEB_SERVER_HOST, WEB_SERVER_PORT = environ.get("HOST", "127.0.0.1"), environ.get("PORT", "8070")
 
@@ -100,15 +102,32 @@ async def swap(message: Message):
     for item in users_active_wallet_dict[user_id]:
         blockchain, wallet_address = item.split('.')
         selected_wallets[blockchain] = wallet_address
-    request_id, best_route = await rango_client.route(connected_wallets, selected_wallets, from_blockchain, from_token_address,
-                                                      to_blockchain,
-                                                      to_token_address, float(amount))
-    request_latest_route[user_id] = best_route
+    best_route_response: BestRouteResponse = await rango_client.route(connected_wallets, selected_wallets,
+                                                                      from_blockchain,
+                                                                      from_token_address,
+                                                                      to_blockchain,
+                                                                      to_token_address, float(amount))
+    request_id = best_route_response.requestId
+    swaps = best_route_response.result.swaps
+    swap_path, fee_amount_msg = '', ''
+    for swap in swaps:
+        from_amount = '%.3f' % Decimal(swap.fromAmount)
+        to_amount = '%.3f' % Decimal(swap.toAmount)
+        from_blockchain_symbol = f'{from_amount} {swap.from_.blockchain}.{swap.from_.symbol}'
+        to_blockchain_symbol = f'{to_amount} {swap.to.blockchain}.{swap.to.symbol}'
+        swapper = f'{swap.swapperId} ({swap.swapperType})'
+        swap_path += from_blockchain_symbol + " -> " + swapper + " -> " + to_blockchain_symbol
+        for fee in swap.fee:
+            fee_amount_msg += f'`{fee.name}`: `{format_output_amount(fee.amount)} {fee.asset.blockchain}.{fee.asset.symbol}` \n'
+
+    request_latest_route[user_id] = request_id
+
     mk_b = InlineKeyboardBuilder()
     mk_b.button(text='Confirm Swap', callback_data=f'confirmSwap|{request_id}')
-    msg = "🦶 The best route is: \n\n" \
-          "🔹 %s \n \n " \
-          "❓If you're happy with the rate, confirm the swap" % best_route
+    msg = "🔹 The best route is: \n\n" \
+          "🛣 %s \n \n " \
+          "⛽️ %s \n \n " \
+          "❓If you're happy with the rate and the fee, confirm the swap" % (swap_path, fee_amount_msg)
     message = await message.answer(text=msg, reply_markup=mk_b.as_markup())
     print(message)
     message_id_map[user_id] = str(message.message_id)
@@ -159,7 +178,6 @@ async def balance(message: Message):
 
 async def confirm_swap(message: Message, request_id: str):
     print("request_id: " + request_id)
-    print(message)
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
     request_latest_step[request_id] = request_latest_step.get(request_id, 0) + 1
@@ -177,7 +195,6 @@ async def confirm_swap(message: Message, request_id: str):
         asyncio.create_task(check_approval_status_looper(message, request_id))
         res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
         message_id_map[user_id] = str(res.message_id)
-        print(f'last msg id before callback => {message_id_map[user_id]}')
         return
     elif approved_before and is_success:
         msg = f"Please sign the tx by clicking on the button 👇"
@@ -185,7 +202,6 @@ async def confirm_swap(message: Message, request_id: str):
         mk_b.button(text='Sign Transaction', url=sign_tx_or_error)
         res = await message.edit_text(text=msg, inline_message_id=msg_id, reply_markup=mk_b.as_markup())
         message_id_map[user_id] = str(res.message_id)
-        print(f'last msg id before callback => {message_id_map[user_id]}')
         return
     else:
         res = await message.edit_text(text=sign_tx_or_error, inline_message_id=msg_id)
