@@ -166,7 +166,7 @@ async def balance(message: Message):
             for balance in balances:
                 asset = balance['asset']
                 address = asset.get('address')
-                if address == None:
+                if address is None:
                     address = "Native"
                 amount = balance['amount']
                 balance_msg += f"\t ▪️ {asset['symbol']} (`{address}`): {amount_to_human_readable(amount['amount'], amount['decimals'], 3)} \n"
@@ -178,8 +178,8 @@ async def balance(message: Message):
 def get_sign_tx_url(resp_tx) -> str:
     tx: json = json.dumps(resp_tx)
     encoded_string = base64.b64encode(tx.encode()).decode()
-    # sign_url = f'https://metamask.app.link/dapp/test-dapp-pearl.vercel.app/?param={encoded_string}'
-    sign_url = f'https://test-dapp-pearl.vercel.app/?param={encoded_string}'
+    # sign_url = f'https://wallet-signer.vercel.app/?param={encoded_string}'
+    sign_url = f'https://wallet-signer.vercel.app//?param={encoded_string}'
     return sign_url
 
 

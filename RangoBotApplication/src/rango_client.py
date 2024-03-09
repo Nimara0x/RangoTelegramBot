@@ -53,7 +53,6 @@ class RangoClient(Singleton):
         base_url = self.base_url + url
         req_url = base_url + '?' + encoded_params
         headers = {"accept": "*/*", "content-type": "application/json"}
-        print(f"final url: {req_url}")
         async with aiohttp.ClientSession(raise_for_status=True) as session:
             async with session.request(
                     method,
