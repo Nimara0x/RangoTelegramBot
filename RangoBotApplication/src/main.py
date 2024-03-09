@@ -44,7 +44,7 @@ async def command_start_handler(message: Message):
           "Please note that only EVM chains are currently supported, other chains will be added soon...\n" \
           "First, connect your EVM wallets with the following format: \n\n" \
           "/wallets Blockchain.walletAddress Blockchain.walletAddress \n" \
-          "For instance: \n" \
+          "For instance: 👇\n" \
           "BSC.0x55d398326f99059ff775485246999027b3197955"
     return await message.answer(text=msg)
 

@@ -1,8 +1,6 @@
-import json
 from typing import Optional
-import asyncio, base64
+import asyncio
 from aiogram.client.session import aiohttp
-
 from rango_response_entities import TransactionObject
 from rango_request_entities import BestRouteResponse
 from utils import Singleton
