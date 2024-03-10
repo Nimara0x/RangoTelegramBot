@@ -121,7 +121,7 @@ async def swap(message: Message):
         for fee in swap.fee:
             fee_amount_msg += f'`⛽️ {fee.name}`: `{format_output_amount(fee.amount)} {fee.asset.blockchain}.{fee.asset.symbol}` \n'
 
-    request_latest_route[user_id] = request_id
+    request_latest_route[user_id] = swap_path
 
     mk_b = InlineKeyboardBuilder()
     mk_b.button(text='Confirm Swap', callback_data=f'confirmSwap|{request_id}')
@@ -151,7 +151,6 @@ async def get_populars(message: Message):
 
 @dp.message(Command('balance'))
 async def balance(message: Message):
-    print(message)
     user_id = message.chat.id
     user_wallets = users_wallets_dict[user_id]
     text = ''.join(message.text.split(' ')[1:])
@@ -226,8 +225,6 @@ async def confirm_swap(message: Message, request_id: str):
 
 
 async def sign_tx(message: Message, request_id: str):
-    print("Sign request_id: " + request_id)
-    print(message)
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
     response = await rango_client.create_transaction(request_id)
@@ -301,7 +298,7 @@ async def check_tx_sign_status_looper(user_id: int, request_id: str, tx_id: str,
         await asyncio.sleep(2)
         retry += 1
         print(f"retry: {retry}, approve status: {is_tx_signed}")
-        if retry > 100:
+        if retry > 150:
             return False
     print(f"out of loop, approve status: {is_tx_signed}")
     if is_tx_signed and tx:
