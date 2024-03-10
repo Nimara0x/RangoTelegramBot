@@ -7,7 +7,7 @@ import asyncio
 from collections import defaultdict
 from decimal import Decimal
 from os import environ
-from typing import Any
+from typing import Any, Union
 
 import aiohttp_cors
 from aiogram.handlers import MessageHandler
@@ -21,7 +21,8 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from rango_client import RangoClient
 from aiohttp import web
 
-from rango_response_entities import BestRouteResponse
+from rango_response_entities import BestRouteResponse, CreateTransactionResponse, CosmosTransaction, EvmTransaction, \
+    SolanaTransaction, StarkNetTransaction, TransferTransaction, TrxTransaction
 from utils import amount_to_human_readable, format_output_amount
 
 logger = logging.getLogger(__file__)
@@ -178,10 +179,12 @@ async def balance(message: Message):
     return await message.answer(text=balance_msg)
 
 
-def get_sign_tx_url(resp_tx: dict, request_id: str, user_id: int) -> str:
-    resp_tx['reqId'] = request_id
-    resp_tx['tgUserId'] = user_id
-    tx: json = json.dumps(resp_tx)
+def get_sign_tx_url(resp_tx: Union[
+        CosmosTransaction, EvmTransaction, SolanaTransaction, StarkNetTransaction, TransferTransaction, TrxTransaction],
+                    request_id: str, user_id: int) -> str:
+    resp_tx.reqId = request_id
+    resp_tx.tgUserId = user_id
+    tx: json = resp_tx.to_json()
     encoded_string = base64.b64encode(tx.encode()).decode()
     # sign_url = f'https://wallet-signer.vercel.app/?param={encoded_string}'
     sign_url = f'https://wallet-signer.vercel.app//?param={encoded_string}'
@@ -193,14 +196,14 @@ async def confirm_swap(message: Message, request_id: str):
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
     request_latest_step[request_id] = request_latest_step.get(request_id, 0) + 1
-    response = await rango_client.create_transaction(request_id)
-    is_success, sign_tx_or_error = response['ok'], ''
+    response: CreateTransactionResponse = await rango_client.create_transaction(request_id)
+    is_success, sign_tx_or_error = response.ok, ''
     if not is_success:
-        sign_tx_or_error = response.get('error', '')
+        sign_tx_or_error = response.error
         res = await message.edit_text(text=f'❌ {sign_tx_or_error}', inline_message_id=msg_id)
         message_id_map[user_id] = str(res.message_id)
         return
-    resp_tx = response['transaction']
+    resp_tx = response.transaction
     sign_url = get_sign_tx_url(resp_tx, request_id, user_id)
     approved_before = await only_check_approval_status_looper(max_retry=2, request_id=request_id)
     if is_success and not approved_before:
@@ -228,9 +231,9 @@ async def sign_tx(message: Message, request_id: str):
     user_id = message.chat.id
     msg_id = message_id_map[user_id]
     response = await rango_client.create_transaction(request_id)
-    is_success, sign_tx_or_error = response['ok'], ''
+    is_success, sign_tx_or_error = response.ok, ''
     if is_success:
-        resp_tx = response['transaction']
+        resp_tx = response.transaction
         sign_url = get_sign_tx_url(resp_tx, request_id, user_id)
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()

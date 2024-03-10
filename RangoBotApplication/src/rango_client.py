@@ -1,7 +1,8 @@
 from typing import Optional, Any
 import asyncio
 from aiogram.client.session import aiohttp
-from rango_response_entities import TransactionObject, MetaResponse, BalanceResponse, BestRouteResponse
+from rango_response_entities import TransactionObject, MetaResponse, BalanceResponse, BestRouteResponse, \
+    CreateTransactionResponse
 from utils import Singleton
 import config
 
@@ -110,7 +111,7 @@ class RangoClient(Singleton):
         best_route: BestRouteResponse = BestRouteResponse.from_dict(response_json)
         return best_route
 
-    async def create_transaction(self, request_id: str, step: int = 1, slippage: int = 2):
+    async def create_transaction(self, request_id: str, step: int = 1, slippage: int = 2) -> CreateTransactionResponse:
         url = f"tx/create"
         payload = {
             "userSettings": {
@@ -124,9 +125,9 @@ class RangoClient(Singleton):
             "requestId": request_id,
             "step": step,
         }
-        response: dict = await self.__request(url, "POST", data=payload)
-        print(response)
-        return response
+        response_json: dict = await self.__request(url, "POST", data=payload)
+        create_tx: CreateTransactionResponse = CreateTransactionResponse.from_dict(response_json)
+        return create_tx
 
     async def check_approval(self, request_id: str) -> bool:
         url = f"tx/{request_id}/check-approval"

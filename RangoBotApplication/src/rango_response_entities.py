@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 from dataclasses_json import dataclass_json, config
 from decimal import Decimal
 
@@ -75,8 +75,6 @@ class SwapFee:
     expenseType: str
     amount: float
     name: str
-
-
 
 
 @dataclass_json
@@ -249,3 +247,92 @@ class WalletDetails:
 @dataclass
 class BalanceResponse:
     wallets: List[WalletDetails]
+
+
+# Create Transaction
+@dataclass_json
+@dataclass
+class GenericTransaction:
+    type: str
+
+
+@dataclass_json
+@dataclass
+class CosmosTransaction(GenericTransaction):
+    fromWalletAddress: str
+    blockChain: str
+    data: dict
+    rawTransfer: Optional[dict] = None
+
+
+@dataclass_json
+@dataclass
+class EvmTransaction(GenericTransaction):
+    blockChain: str
+    isApprovalTx: bool
+    to: str
+    data: Optional[str] = None
+    value: Optional[str] = None
+    gasLimit: Optional[str] = None
+    gasPrice: Optional[int] = None
+    maxPriorityFeePerGas: Optional[int] = None
+    maxFeePerGas: Optional[int] = None
+    nonce: Optional[int] = None
+    from_: Optional[str] = field(default=None, metadata={"name": "from"})
+
+
+@dataclass_json
+@dataclass
+class SolanaTransaction(GenericTransaction):
+    blockChain: str
+    from_: str = field(metadata={"name": "from"})
+    identifier: str
+    instructions: List[dict]
+    signatures: List[dict]
+    txType: str
+    serializedMessage: Optional[str] = None
+    recentBlockhash: Optional[str] = None
+
+
+@dataclass_json
+@dataclass
+class StarkNetTransaction(GenericTransaction):
+    blockChain: str
+    calls: List[dict]
+    isApprovalTx: bool
+    maxFee: Optional[int] = None
+
+
+@dataclass_json
+@dataclass
+class TransferTransaction(GenericTransaction):
+    method: str
+    fromWalletAddress: str
+    recipientAddress: str
+    amount: int
+    decimals: int
+    asset: Asset
+    memo: Optional[str] = None
+
+
+@dataclass_json
+@dataclass
+class TrxTransaction(GenericTransaction):
+    blockChain: str
+    isApprovalTx: bool
+    txID: str
+    visible: bool
+    raw_data: Optional[dict] = None
+    raw_data_hex: Optional[str] = None
+    externalTxId: Optional[str] = None
+    __payload__: Optional[dict] = None
+
+
+@dataclass_json
+@dataclass
+class CreateTransactionResponse:
+    ok: bool
+    transaction: Union[
+        CosmosTransaction, EvmTransaction, SolanaTransaction, StarkNetTransaction, TransferTransaction, TrxTransaction]
+    error: Optional[str] = None
+    errorCode: Optional[int] = None
