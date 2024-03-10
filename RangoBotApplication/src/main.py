@@ -177,7 +177,9 @@ async def balance(message: Message):
     return await message.answer(text=balance_msg)
 
 
-def get_sign_tx_url(resp_tx) -> str:
+def get_sign_tx_url(resp_tx: dict, request_id: str, user_id: int) -> str:
+    resp_tx['reqId'] = request_id
+    resp_tx['tgUserId'] = user_id
     tx: json = json.dumps(resp_tx)
     encoded_string = base64.b64encode(tx.encode()).decode()
     # sign_url = f'https://wallet-signer.vercel.app/?param={encoded_string}'
@@ -198,9 +200,7 @@ async def confirm_swap(message: Message, request_id: str):
         message_id_map[user_id] = str(res.message_id)
         return
     resp_tx = response['transaction']
-    resp_tx['reqId'] = request_id
-    resp_tx['tgUserId'] = user_id
-    sign_url = get_sign_tx_url(resp_tx)
+    sign_url = get_sign_tx_url(resp_tx, request_id, user_id)
     approved_before = await only_check_approval_status_looper(max_retry=2, request_id=request_id)
     if is_success and not approved_before:
         msg = f"Please approve the tx by clicking on the button 👇 \n" \
@@ -232,7 +232,7 @@ async def sign_tx(message: Message, request_id: str):
     is_success, sign_tx_or_error = response['ok'], ''
     if is_success:
         resp_tx = response['transaction']
-        sign_url = get_sign_tx_url(resp_tx)
+        sign_url = get_sign_tx_url(resp_tx, request_id, user_id)
         msg = f"Please sign the tx by clicking on the button 👇"
         mk_b = InlineKeyboardBuilder()
         mk_b.button(text='Sign Transaction', url=sign_url)
