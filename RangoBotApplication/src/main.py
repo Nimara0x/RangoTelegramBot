@@ -326,7 +326,10 @@ async def main() -> None:
 async def check_status_handler(request):
     tx_hash = request.query.get('tx_hash', None)
     request_id = request.query.get('request_id', None)
-    tg_user_id = int(request.query.get('tg_user_id', None))
+    try:
+        tg_user_id = int(request.query.get('tg_user_id', None))
+    except ValueError:
+        return web.Response(text="Wrong tg user id!")
     step = request_latest_step[request_id]
     asyncio.create_task(check_tx_sign_status_looper(tg_user_id, request_id, tx_hash, step))
     return web.Response(text="Received!")
