@@ -92,12 +92,12 @@ class RangoClient(Singleton):
         payload = {
             "from": {
                 "blockchain": from_blockchain.upper(),
-                "symbol": from_token['symbol'],
+                "symbol": from_token.symbol,
                 "address": from_token_address
             },
             "to": {
                 "blockchain": to_blockchain.upper(),
-                "symbol": to_token['symbol'],
+                "symbol": to_token.symbol,
                 "address": to_token_address
             },
             "checkPrerequisites": False,
