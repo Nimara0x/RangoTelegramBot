@@ -159,9 +159,9 @@ async def balance(message: Message):
         wallet_addresses = list(user_wallets)
     else:
         return message.answer(text='Please add your wallets by typing /wallets Blockchain.Address like BSC.0x...')
-    wallets = await rango_client.balance(wallet_addresses)
+    balance_response = await rango_client.balance(wallet_addresses)
     balance_msg = ''
-    for w in wallets:
+    for w in balance_response.wallets:
         balance_msg += f'⛓ Blockchain: {w.get("blockChain")} \n'
         balances = w['balances']
         if balances:

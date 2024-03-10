@@ -1,7 +1,7 @@
 from typing import Optional, Any
 import asyncio
 from aiogram.client.session import aiohttp
-from rango_response_entities import TransactionObject, MetaResponse
+from rango_response_entities import TransactionObject, MetaResponse, BalanceResponse
 from rango_request_entities import BestRouteResponse
 from utils import Singleton
 import config
@@ -29,8 +29,9 @@ class RangoClient(Singleton):
         print('Meta has been initialized...')
 
     def __get_token_data(self, blockchain: str, token_address: Optional[str]):
-        for token in self.__meta['tokens']:
-            if token['blockchain'] == blockchain.upper() and token['address'] == token_address.lower():
+        meta: MetaResponse = self.__meta
+        for token in meta.tokens:
+            if token.blockchain == blockchain.upper() and token.address == token_address.lower():
                 return token
 
     async def get_meta(self) -> MetaResponse:
@@ -66,15 +67,14 @@ class RangoClient(Singleton):
                 response = await resp.json()
                 return response
 
-    async def balance(self, wallet_addresses: list[str]):
+    async def balance(self, wallet_addresses: list[str]) -> BalanceResponse:
         url = f"wallets/details"
         list_params = []
         for bwa in wallet_addresses:
             list_params.append(f'address={bwa}')
-        response: dict = await self.__request(url, "GET", list_params=list_params)
-        print(response)
-        wallets = response.get('wallets')
-        return wallets
+        response_json: dict = await self.__request(url, "GET", list_params=list_params)
+        balance_response: BalanceResponse = GetWalletDetailsResponse.from_dict(response_json)
+        return balance_response
 
     async def route(self, _connected_wallets: list, selected_wallets: dict, from_blockchain: str,
                     from_token_address: str,

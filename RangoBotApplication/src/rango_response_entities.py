@@ -61,6 +61,8 @@ class Asset:
     blockchain: str
     symbol: str
     address: Optional[str] = None
+    name: Optional[str] = None
+    decimals: Optional[int] = None
 
     def __repr__(self):
         return f'{self.blockchain}.{self.symbol}'
@@ -194,3 +196,30 @@ class MetaResponse:
     popularTokens: List[Token]
     blockchains: List[BlockchainMeta]
     swappers: List[SwapperMetaDto]
+
+
+@dataclass_json
+@dataclass
+class GetWalletDetailsRequest:
+    addresses: List[str]
+
+
+@dataclass_json
+@dataclass
+class Balance:
+    asset: Asset
+    amount: Amount
+
+
+@dataclass_json
+@dataclass
+class WalletDetails:
+    address: str
+    blockChain: str
+    balances: List[Balance]
+
+
+@dataclass_json
+@dataclass
+class BalanceResponse:
+    wallets: List[WalletDetails]
