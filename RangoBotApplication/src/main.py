@@ -171,7 +171,7 @@ async def balance(message: Message):
                 if address is None:
                     address = "Native"
                 amount = balance.amount
-                balance_msg += f"\t ▪️ {asset.symbol} (`{address}`): {amount_to_human_readable(amount.amount, amount.decimals, 3)} \n"
+                balance_msg += f"\t ▪️ `{w.blockChain}.{address}` ({asset.symbol}): {amount_to_human_readable(amount.amount, amount.decimals, 3)} \n"
         else:
             balance_msg += '\t ▪️ No assets! \n'
     return await message.answer(text=balance_msg)
