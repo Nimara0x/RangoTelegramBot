@@ -1,8 +1,7 @@
 from typing import Optional, Any
 import asyncio
 from aiogram.client.session import aiohttp
-from rango_response_entities import TransactionObject, MetaResponse, BalanceResponse
-from rango_request_entities import BestRouteResponse
+from rango_response_entities import TransactionObject, MetaResponse, BalanceResponse, BestRouteResponse
 from utils import Singleton
 import config
 
@@ -28,10 +27,12 @@ class RangoClient(Singleton):
         self._popular_tokens = popular_response
         print('Meta has been initialized...')
 
-    def __get_token_data(self, blockchain: str, token_address: Optional[str]):
+    def __get_token_data(self, blockchain: str, token_addr_sym: str):
         meta: MetaResponse = self.__meta
         for token in meta.tokens:
-            if token.blockchain == blockchain.upper() and token.address == token_address.lower():
+            if token.blockchain == blockchain.upper() and token.symbol == token_addr_sym:
+                return token
+            elif token.blockchain == blockchain.upper() and token.address == token_addr_sym.lower():
                 return token
 
     async def get_meta(self) -> MetaResponse:
@@ -77,13 +78,12 @@ class RangoClient(Singleton):
         return balance_response
 
     async def route(self, _connected_wallets: list, selected_wallets: dict, from_blockchain: str,
-                    from_token_address: str,
-                    to_blockchain: str, to_token_address: str, amount: float) -> BestRouteResponse:
+                    from_token_identifier: str,
+                    to_blockchain: str, to_token_identifier: str, amount: float) -> BestRouteResponse:
         url = f"routing/best"
-        from_token = self.__get_token_data(from_blockchain, from_token_address)
-        to_token = self.__get_token_data(to_blockchain, to_token_address)
+        from_token = self.__get_token_data(from_blockchain, from_token_identifier)
+        to_token = self.__get_token_data(to_blockchain, to_token_identifier)
         connected_wallets = []
-
         for item in _connected_wallets:
             blockchain, address = item.split('.')
             connected_wallets.append(
@@ -93,12 +93,12 @@ class RangoClient(Singleton):
             "from": {
                 "blockchain": from_blockchain.upper(),
                 "symbol": from_token.symbol,
-                "address": from_token_address
+                "address": from_token.address
             },
             "to": {
                 "blockchain": to_blockchain.upper(),
                 "symbol": to_token.symbol,
-                "address": to_token_address
+                "address": to_token.address
             },
             "checkPrerequisites": False,
             "connectedWallets": connected_wallets,

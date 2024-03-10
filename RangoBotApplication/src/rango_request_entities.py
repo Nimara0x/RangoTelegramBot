@@ -34,6 +34,7 @@ class SwapNode:
     percent: float
     marketId: Optional[str] = None
 
+
 @dataclass_json
 @dataclass
 class SwapResultAsset:

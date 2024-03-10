@@ -94,8 +94,8 @@ async def swap(message: Message):
     except ValueError:
         return await message.answer(text="Enter your desired swap amount at the end of text => /swap "
                                          "BSC.token_address BSC.token_address 20")
-    from_blockchain, from_token_address = from_blockchain_address.split('.')
-    to_blockchain, to_token_address = to_blockchain_address.split('.')
+    from_blockchain, from_token_identifier = from_blockchain_address.split('.')
+    to_blockchain, to_token_identifier = to_blockchain_address.split('.')
     connected_wallets = list(users_wallets_dict[user_id])
     selected_wallets = {}
     for item in users_active_wallet_dict[user_id]:
@@ -103,9 +103,11 @@ async def swap(message: Message):
         selected_wallets[blockchain] = wallet_address
     best_route_response: BestRouteResponse = await rango_client.route(connected_wallets, selected_wallets,
                                                                       from_blockchain,
-                                                                      from_token_address,
+                                                                      from_token_identifier,
                                                                       to_blockchain,
-                                                                      to_token_address, float(amount))
+                                                                      to_token_identifier, float(amount))
+    if best_route_response.result is None:
+        return await message.answer('No route available! please try another routes...')
     request_id = best_route_response.requestId
     swaps = best_route_response.result.swaps
     swap_path, fee_amount_msg = '', ''
@@ -114,18 +116,18 @@ async def swap(message: Message):
         to_amount = '%.3f' % Decimal(swap.toAmount)
         from_blockchain_symbol = f'{from_amount} {swap.from_.blockchain}.{swap.from_.symbol}'
         to_blockchain_symbol = f'{to_amount} {swap.to.blockchain}.{swap.to.symbol}'
-        swapper = f'{swap.swapperId} ({swap.swapperType})'
+        swapper = f'🛣 {swap.swapperId} ({swap.swapperType})'
         swap_path += from_blockchain_symbol + " -> " + swapper + " -> " + to_blockchain_symbol
         for fee in swap.fee:
-            fee_amount_msg += f'`{fee.name}`: `{format_output_amount(fee.amount)} {fee.asset.blockchain}.{fee.asset.symbol}` \n'
+            fee_amount_msg += f'`⛽️ {fee.name}`: `{format_output_amount(fee.amount)} {fee.asset.blockchain}.{fee.asset.symbol}` \n'
 
     request_latest_route[user_id] = request_id
 
     mk_b = InlineKeyboardBuilder()
     mk_b.button(text='Confirm Swap', callback_data=f'confirmSwap|{request_id}')
     msg = "🔹 The best route is: \n\n" \
-          "🛣 %s \n \n " \
-          "⛽️ %s \n" \
+          "%s \n \n " \
+          "%s \n" \
           "❓If you're happy with the rate and the fee, confirm the swap" % (swap_path, fee_amount_msg)
     message = await message.answer(text=msg, reply_markup=mk_b.as_markup())
     print(message)

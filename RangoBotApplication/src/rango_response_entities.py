@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import Optional, List, Dict
 from dataclasses_json import dataclass_json, config
 from decimal import Decimal
 
@@ -77,11 +77,26 @@ class SwapFee:
     name: str
 
 
+
+
 @dataclass_json
 @dataclass
 class SwapNode:
     marketName: str
     percent: float
+    marketId: Optional[str] = None
+
+
+@dataclass_json
+@dataclass
+class SwapNode:
+    nodes: List[SwapNode]
+
+
+@dataclass_json
+@dataclass
+class SwapRoute:
+    nodes: List[SwapNode]
 
 
 @dataclass_json
@@ -107,7 +122,6 @@ class RecommendedSlippage:
 @dataclass
 class SwapResult:
     swapperId: str
-    swapperLogo: str
     swapperType: str
     from_: SwapResultAsset = field(metadata=config(field_name='from'))
     to: SwapResultAsset
@@ -116,8 +130,20 @@ class SwapResult:
     fee: List[SwapFee]
     estimatedTimeInSeconds: int
     swapChainType: str
-    routes: Optional[List[SwapNode]] = None
+    fromAsset: Optional[Asset] = None
+    toAsset: Optional[Asset] = None
+    swapperLogo: Optional[str] = None
+    fromAmountPrecision: Optional[float] = None
+    fromAmountMinValue: Optional[float] = None
+    fromAmountMaxValue: Optional[float] = None
+    fromAmountRestrictionType: Optional[str] = None
+    routes: Optional[List[SwapRoute]] = None
     recommendedSlippage: Optional[RecommendedSlippage] = None
+    warnings: Optional[List[str]] = None
+    timeStat: Optional[Dict[str, int]] = None
+    includesDestinationTx: Optional[bool] = None
+    maxRequiredSign: Optional[int] = None
+    isWrapped: Optional[bool] = None
 
 
 @dataclass_json
@@ -128,8 +154,8 @@ class SimulationResult:
     resultType: str
 
 
-@dataclass
 @dataclass_json
+@dataclass
 class BestRouteResponse:
     requestAmount: float
     requestId: str
