@@ -8,28 +8,26 @@ from collections import defaultdict
 from decimal import Decimal
 from os import environ
 from typing import Any, Union
-
 import aiohttp_cors
-from aiogram.handlers import MessageHandler
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler, setup_application
+from rango_sdk.rango_response_entities import BestRouteResponse, CreateTransactionResponse, CosmosTransaction, \
+    EvmTransaction, SolanaTransaction, StarkNetTransaction, TransferTransaction, TrxTransaction
+
 import config
 from aiogram import Bot, Dispatcher, Router
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart, Command
 from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
-from rango_client import RangoClient
 from aiohttp import web
-
-from rango_response_entities import BestRouteResponse, CreateTransactionResponse, CosmosTransaction, EvmTransaction, \
-    SolanaTransaction, StarkNetTransaction, TransferTransaction, TrxTransaction
+from rango_sdk import RangoClient
 from utils import amount_to_human_readable, format_output_amount
 
 logger = logging.getLogger(__file__)
 dp = Dispatcher()
 router = Router()
 dp.include_router(router)
-rango_client = RangoClient()
+rango_client = RangoClient(api_key=config.RANGO_API_KEY)
 bot = Bot(config.TOKEN, parse_mode=ParseMode.MARKDOWN)
 users_wallets_dict = defaultdict(set)
 users_active_wallet_dict = defaultdict(set)
@@ -137,17 +135,24 @@ async def swap(message: Message):
 
 @dp.message(Command('popular'))
 async def get_populars(message: Message):
-    tokens = await rango_client.popular_tokens()
+    tokens_meta = await rango_client.popular_tokens()
     tokens_msg, c = '', 1
-    for token in tokens:
-        if token["address"] is not None and len(token["address"]) > 5 and token['blockchain'] in ['POLYGON', 'BSC',
-                                                                                                  'ETH', 'ARBITRUM'] and \
-                token['symbol'] in ['USDT', 'USDC', 'DAI']:
-            tokens_msg += f'🔹 `{token["blockchain"]}.{token["symbol"]}` -> `{token["address"]}`\n'
+    for token in tokens_meta.popularTokens:
+        if token.address is not None and len(token.address) > 5 and token.blockchain in ['POLYGON', 'BSC', 'ETH'] and \
+                token.symbol in ['USDT', 'USDC', 'DAI']:
+            identifier = get_asset_identifier(token.blockchain, token.address, token.symbol)
+            tokens_msg += f'🔹 {identifier}\n'
             c += 1
         if c > 15:
             break
     return await message.answer(text=tokens_msg)
+
+
+def get_asset_identifier(blockchain: str, address: str, symbol: str) -> str:
+    identifier = f'`{blockchain}.{address}` - {symbol}'
+    if address is None:
+        identifier = f'`{blockchain}.{symbol}`'
+    return identifier
 
 
 @dp.message(Command('balance'))
@@ -169,11 +174,9 @@ async def balance(message: Message):
         if balances:
             for balance in balances:
                 asset = balance.asset
-                address = asset.address
-                if address is None:
-                    address = "Native"
+                identifier = get_asset_identifier(w.blockChain, asset.address, asset.symbol)
                 amount = balance.amount
-                balance_msg += f"\t ▪️ `{w.blockChain}.{address}` ({asset.symbol}): {amount_to_human_readable(amount.amount, amount.decimals, 3)} \n"
+                balance_msg += f"\t ▪️ {identifier}: {amount_to_human_readable(amount.amount, amount.decimals, 3)} \n"
         else:
             balance_msg += '\t ▪️ No assets! \n'
     return await message.answer(text=balance_msg)
@@ -359,7 +362,8 @@ async def search(message: Message):
                     found = True
         if found:
             result_list[key] = token
-            result_msg += f'🔹 `{token.blockchain}.{token.address}` - `{token.symbol}` \n'
+            identifier = get_asset_identifier(token.blockchain, token.address, token.symbol)
+            result_msg += f'🔹 {identifier} \n'
 
     if result_list:
         msg = 'Found the following symbols: \n\n' \
