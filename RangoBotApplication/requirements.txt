@@ -5,3 +5,4 @@ redis~=5.0.1
 web3==6.15.1
 dataclasses-json==0.6.4
 aiohttp_cors==0.7.0
+rango-sdk
