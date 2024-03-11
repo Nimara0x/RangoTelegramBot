@@ -20,8 +20,10 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiohttp import web
 from rango_sdk import RangoClient
+from database import RangoBotDatabase
 from utils import amount_to_human_readable, format_output_amount
 
+rango_db = RangoBotDatabase()
 logger = logging.getLogger(__file__)
 dp = Dispatcher()
 router = Router()
@@ -58,6 +60,11 @@ async def wallets(message: Message):
         if detected_wallets:
             for wallet in detected_wallets:
                 users_wallets_dict[user_id].add(wallet)
+                try:
+                    blockchain, wallet_address = wallet.split('.')
+                except ValueError:
+                    return await message.answer(text='Please enter your wallets in the format of `Blockchain.WalletAddress`, like BSC.0xabc...')
+                rango_db.insert_wallet_address(str(user_id), blockchain, wallet_address)
     else:
         if not users_wallets_dict[user_id]:
             msg = "💳 You don't have any wallets. Add your first wallet like this: /wallets BSC.0x123..."
@@ -435,8 +442,17 @@ def webhook_main():
     web.run_app(app, host=WEB_SERVER_HOST, port=int(WEB_SERVER_PORT))
 
 
+def fill_memory_from_db():
+    stored_wallets = rango_db.get_all_wallets()
+    for wallet in stored_wallets:
+        user_id, blockchain, address = wallet[1], wallet[2], wallet[3]
+        user_id = int(user_id)
+        users_wallets_dict[user_id].add(f'{blockchain}.{address}')
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    fill_memory_from_db()
     is_test = os.environ.get('DEVELOPMENT', False)
     if is_test:
         asyncio.run(main())
