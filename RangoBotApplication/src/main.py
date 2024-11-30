@@ -64,6 +64,8 @@ async def wallets(message: Message):
                     blockchain, wallet_address = wallet.split('.')
                 except ValueError:
                     return await message.answer(text='Please enter your wallets in the format of `Blockchain.WalletAddress`, like BSC.0xabc...')
+                if not blockchain or not wallet_address:
+                    continue
                 rango_db.insert_wallet_address(str(user_id), blockchain, wallet_address)
     else:
         if not users_wallets_dict[user_id]:
