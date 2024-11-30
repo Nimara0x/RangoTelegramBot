@@ -177,9 +177,12 @@ async def balance(message: Message):
     for w in balance_response.wallets:
         balance_msg += f'⛓ Blockchain: {w.blockChain} \n'
         balances = w.balances
+        forbidden_words = ['airdrop', 'claim', '.', '/']
         if balances:
             for balance in balances:
                 asset = balance.asset
+                if any(w for w in forbidden_words if w in asset.symbol.lower()):
+                    continue
                 identifier = get_asset_identifier(w.blockChain, asset.address, asset.symbol)
                 amount = balance.amount
                 balance_msg += f"\t ▪️ {identifier}: {amount_to_human_readable(amount.amount, amount.decimals, 3)} \n"
